@@ -83,6 +83,7 @@ print(emojis)  # 😊 ☀️
 - [研究概要](docs/research_overview.md)
 - [実装ガイド](docs/implemention_guide.md)
 - [評価方法](docs/evaluation.md)
+- [進捗チェックリスト](docs/status.md)
 
 ## 開発環境
 
