@@ -58,6 +58,8 @@ def generate_dataset(
     *,
     output_path: Path,
     request_delay: float = 0.5,
+    min_emoji_count: int = 1,
+    max_emoji_count: int = 5,
 ) -> List[DataSample]:
     samples: List[DataSample] = []
     for idx, sentence in enumerate(sentences):
@@ -68,14 +70,16 @@ def generate_dataset(
             emoji_output = client.complete(
                 prompts.EMOJI_GENERATION_PROMPT.format(text=sns_text)
             ).strip()
-            emojis = extract_emojis(emoji_output)
+            emojis = extract_emojis(emoji_output, max_count=max_emoji_count)
             sample = DataSample(
                 original_text=sentence,
                 sns_text=sns_text,
                 emojis=emojis,
                 emoji_string=" ".join(emojis),
             )
-            if validate_sample(sample):
+            if validate_sample(
+                sample, min_count=min_emoji_count, max_count=max_emoji_count
+            ):
                 samples.append(sample)
         except Exception:
             continue
