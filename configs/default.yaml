@@ -1,0 +1,111 @@
+# Jmoji デフォルト設定
+
+# =============================================================================
+# データ生成設定
+# =============================================================================
+data:
+  # Wikipediaデータセット
+  wikipedia_subset: "20231101.ja"
+  wikipedia_dataset: "wikimedia/wikipedia"
+
+  # サンプリング設定
+  max_samples: 1000
+  random_seed: 42
+
+  # テキストフィルタリング
+  min_text_length: 10      # 最小文字数
+  max_text_length: 100     # 最大文字数
+
+  # 出力パス
+  output_dir: "data/outputs"
+  output_filename: "dataset_v1.jsonl"
+
+# =============================================================================
+# 教師LLM設定（Claude Haiku 4.5 via OpenRouter）
+# =============================================================================
+teacher:
+  model: "anthropic/claude-haiku-4.5"
+  base_url: "https://openrouter.ai/api/v1"
+
+  # 生成パラメータ
+  temperature: 0.7
+  max_tokens: 100
+
+  # レート制限対策
+  request_delay: 0.5       # リクエスト間の待機秒数
+  max_retries: 3           # 最大リトライ回数
+  timeout: 60              # タイムアウト秒数
+
+# =============================================================================
+# 絵文字設定
+# =============================================================================
+emoji:
+  min_count: 1             # 最小絵文字数
+  max_count: 5             # 最大絵文字数
+  normalize_skin_tone: true  # 肌色バリアントを統合
+
+  # フィルタリング
+  exclude_flags: false     # 国旗絵文字を除外するか
+  exclude_symbols: false   # 記号絵文字を除外するか
+
+# =============================================================================
+# T5学習設定
+# =============================================================================
+training:
+  # モデル
+  model_name: "sonoisa/t5-base-japanese"
+
+  # データ分割
+  train_ratio: 0.8
+  val_ratio: 0.1
+  test_ratio: 0.1
+
+  # ハイパーパラメータ
+  batch_size: 16
+  learning_rate: 0.001
+  weight_decay: 0.01
+  num_epochs: 10
+  warmup_steps: 500
+
+  # シーケンス長
+  max_input_length: 128
+  max_output_length: 32
+
+  # 早期終了
+  early_stopping_patience: 3
+  metric_for_best_model: "eval_loss"
+
+  # その他
+  fp16: true               # 混合精度学習（A100推奨）
+  gradient_accumulation_steps: 1
+  logging_steps: 100
+  save_strategy: "epoch"
+
+  # 出力
+  output_dir: "outputs/models"
+
+# =============================================================================
+# 評価設定
+# =============================================================================
+evaluation:
+  # 使用する指標
+  metrics:
+    - jaccard
+    - f1_micro
+    - f1_macro
+    - exact_match
+    - length_correlation
+
+  # 人手評価
+  human_eval_samples: 50   # 人手評価サンプル数
+
+  # 出力
+  results_dir: "outputs/evaluation"
+
+# =============================================================================
+# ロギング設定
+# =============================================================================
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  log_dir: "outputs/logs"

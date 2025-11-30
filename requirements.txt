@@ -1,0 +1,1 @@
+# uv を利用する場合は `uv export --format requirements-txt > requirements.txt` で生成します。

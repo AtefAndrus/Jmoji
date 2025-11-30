@@ -1,0 +1,538 @@
+# 実装ガイド
+
+## 1. 環境構築
+
+### 1.1 ローカル環境
+
+```bash
+# リポジトリクローン
+git clone https://github.com/your-username/j-moji.git
+cd j-moji
+
+# mise でツールを取得（Python 3.12 / uv latest）
+mise install
+
+# uv で依存関係同期（.venv と uv.lock を生成）
+UV_CACHE_DIR=.uv-cache uv sync
+
+# 必要なら .venv を有効化
+source .venv/bin/activate  # Linux/Mac
+# .venv\Scripts\activate   # Windows
+
+# 環境変数設定
+cp .env.example .env
+# .env を編集
+```
+
+### 1.2 Google Colab
+
+```python
+# リポジトリクローン
+!git clone https://github.com/your-username/j-moji.git
+%cd j-moji
+
+# uv をインストールして同期（Colab はシステム Python を利用）
+!pip install -q uv
+!uv sync --frozen
+
+# 環境変数設定（Colabシークレット推奨）
+import os
+from google.colab import userdata
+os.environ["OPENROUTER_API_KEY"] = userdata.get("OPENROUTER_API_KEY")
+
+# src/ をインポート可能にする
+import sys
+sys.path.append("/content/j-moji")
+```
+
+## 2. データパイプライン
+
+### 2.1 Wikipedia データ取得
+
+```python
+from datasets import load_dataset
+
+# 日本語Wikipedia（約1.4M記事）
+ds = load_dataset("wikimedia/wikipedia", "20231101.ja", split="train")
+
+# サンプル確認
+print(ds[0])
+# {'id': '...', 'url': '...', 'title': '...', 'text': '...'}
+```
+
+### 2.2 文の抽出とフィルタリング
+
+```python
+import re
+
+def extract_sentences(text: str, min_len: int = 10, max_len: int = 100) -> list[str]:
+    """テキストから文を抽出"""
+    # 文分割（簡易版）
+    sentences = re.split(r'(?<=[。！？])', text)
+
+    # フィルタリング
+    filtered = []
+    for s in sentences:
+        s = s.strip()
+        if min_len <= len(s) <= max_len:
+            # 記号のみ、URLのみ等を除外
+            if re.search(r'[ぁ-んァ-ン一-龥]', s):
+                filtered.append(s)
+
+    return filtered
+```
+
+### 2.3 テキスト正規化
+
+```python
+import unicodedata
+
+def normalize_text(text: str) -> str:
+    """テキストの正規化"""
+    # NFKC正規化（全角英数→半角、半角カナ→全角等）
+    text = unicodedata.normalize("NFKC", text)
+
+    # 連続空白を単一に
+    text = re.sub(r'\s+', ' ', text)
+
+    # 前後の空白除去
+    text = text.strip()
+
+    return text
+```
+
+## 3. 教師LLM（Claude）呼び出し
+
+### 3.1 OpenRouter クライアント
+
+```python
+import os
+import httpx
+from typing import Optional
+
+class OpenRouterClient:
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: str = "anthropic/claude-haiku-4.5",
+        base_url: str = "https://openrouter.ai/api/v1"
+    ):
+        self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")
+        self.model = model
+        self.base_url = base_url
+        self.client = httpx.Client(timeout=60.0)
+
+    def complete(
+        self,
+        prompt: str,
+        temperature: float = 0.7,
+        max_tokens: int = 100
+    ) -> str:
+        response = self.client.post(
+            f"{self.base_url}/chat/completions",
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": self.model,
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": temperature,
+                "max_tokens": max_tokens
+            }
+        )
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"]
+```
+
+### 3.2 プロンプトテンプレート
+
+```python
+# SNS風文体変換
+SNS_CONVERSION_PROMPT = """以下の文章を、日本のSNS（X、LINE等）で投稿されるようなカジュアルな文体に変換してください。
+意味は変えずに、話し言葉や口語表現を使ってください。
+変換後の文章のみを出力し、それ以外は何も出力しないでください。
+
+入力: {text}
+出力:"""
+
+# 絵文字生成
+EMOJI_GENERATION_PROMPT = """以下の日本語文に対して、文末に付与するのに適切な絵文字を1〜5個選んでください。
+絵文字のみを空白区切りで出力し、それ以外は何も出力しないでください。
+日本のSNS（X、LINEなど）で自然に見える絵文字の使い方を意識してください。
+文の感情やニュアンス、トーンを適切に反映してください。
+
+入力: {text}
+出力:"""
+```
+
+### 3.3 レート制限対応
+
+```python
+import time
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=4, max=60)
+)
+def generate_with_retry(client: OpenRouterClient, prompt: str) -> str:
+    """リトライ付きAPI呼び出し"""
+    return client.complete(prompt)
+
+def batch_generate(
+    client: OpenRouterClient,
+    texts: list[str],
+    prompt_template: str,
+    delay: float = 0.5
+) -> list[str]:
+    """バッチ生成（レート制限考慮）"""
+    results = []
+    for text in texts:
+        prompt = prompt_template.format(text=text)
+        result = generate_with_retry(client, prompt)
+        results.append(result)
+        time.sleep(delay)  # レート制限回避
+    return results
+```
+
+## 4. 絵文字処理
+
+### 4.1 絵文字リスト取得
+
+```python
+import emoji
+
+def get_all_emojis() -> set[str]:
+    """全絵文字のセットを取得"""
+    return set(emoji.EMOJI_DATA.keys())
+
+# 約3,700個の絵文字
+all_emojis = get_all_emojis()
+```
+
+### 4.2 肌色バリアント正規化
+
+```python
+import re
+
+# 肌色修飾子のパターン
+SKIN_TONE_PATTERN = re.compile(r'[\U0001F3FB-\U0001F3FF]')
+
+def normalize_skin_tone(text: str) -> str:
+    """肌色バリアントを基本絵文字に統合"""
+    return SKIN_TONE_PATTERN.sub('', text)
+
+# 例
+normalize_skin_tone("👋🏻")  # → "👋"
+normalize_skin_tone("👨🏽‍💻")  # → "👨‍💻"
+```
+
+### 4.3 絵文字抽出
+
+```python
+def extract_emojis(text: str, max_count: int = 5) -> list[str]:
+    """テキストから絵文字を抽出"""
+    # 絵文字リストを取得
+    emoji_list = emoji.emoji_list(text)
+
+    # 絵文字のみ抽出
+    emojis = [item['emoji'] for item in emoji_list]
+
+    # 肌色正規化
+    emojis = [normalize_skin_tone(e) for e in emojis]
+
+    # 最大数で切り捨て
+    return emojis[:max_count]
+
+# 例
+extract_emojis("楽しい😊🎉✨最高！")  # → ["😊", "🎉", "✨"]
+```
+
+## 5. データセット生成
+
+### 5.1 生成パイプライン
+
+```python
+import json
+from pathlib import Path
+from dataclasses import dataclass
+from tqdm import tqdm
+
+@dataclass
+class DataSample:
+    original_text: str      # 元のWikipedia文
+    sns_text: str           # SNS風変換後
+    emojis: list[str]       # 生成された絵文字
+    emoji_string: str       # 空白区切り絵文字列
+
+def generate_dataset(
+    client: OpenRouterClient,
+    sentences: list[str],
+    output_path: Path,
+    batch_size: int = 100
+) -> list[DataSample]:
+    """データセット生成"""
+    samples = []
+
+    for i, sentence in enumerate(tqdm(sentences)):
+        try:
+            # SNS風変換
+            sns_text = client.complete(
+                SNS_CONVERSION_PROMPT.format(text=sentence)
+            ).strip()
+
+            # 絵文字生成
+            emoji_output = client.complete(
+                EMOJI_GENERATION_PROMPT.format(text=sns_text)
+            ).strip()
+
+            # 絵文字抽出・検証
+            emojis = extract_emojis(emoji_output)
+            if not emojis:
+                continue  # 絵文字がない場合はスキップ
+
+            sample = DataSample(
+                original_text=sentence,
+                sns_text=sns_text,
+                emojis=emojis,
+                emoji_string=" ".join(emojis)
+            )
+            samples.append(sample)
+
+            # 定期保存
+            if (i + 1) % batch_size == 0:
+                save_dataset(samples, output_path)
+
+        except Exception as e:
+            print(f"Error at {i}: {e}")
+            continue
+
+        time.sleep(0.5)  # レート制限
+
+    save_dataset(samples, output_path)
+    return samples
+
+def save_dataset(samples: list[DataSample], path: Path):
+    """JSONL形式で保存"""
+    with open(path, "w", encoding="utf-8") as f:
+        for sample in samples:
+            f.write(json.dumps(sample.__dict__, ensure_ascii=False) + "\n")
+```
+
+### 5.2 品質チェック
+
+```python
+def validate_sample(sample: DataSample) -> bool:
+    """サンプルの品質チェック"""
+    # 絵文字数チェック
+    if not (1 <= len(sample.emojis) <= 5):
+        return False
+
+    # SNSテキストが空でないか
+    if not sample.sns_text.strip():
+        return False
+
+    # 絵文字以外の文字が混入していないか
+    for e in sample.emojis:
+        if not emoji.is_emoji(e):
+            return False
+
+    return True
+```
+
+## 6. T5ファインチューニング
+
+### 6.1 データセット準備
+
+```python
+from torch.utils.data import Dataset
+from transformers import T5Tokenizer
+
+class EmojiDataset(Dataset):
+    def __init__(
+        self,
+        data_path: Path,
+        tokenizer: T5Tokenizer,
+        max_input_length: int = 128,
+        max_output_length: int = 32
+    ):
+        self.samples = self._load_data(data_path)
+        self.tokenizer = tokenizer
+        self.max_input_length = max_input_length
+        self.max_output_length = max_output_length
+
+    def _load_data(self, path: Path) -> list[dict]:
+        samples = []
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                samples.append(json.loads(line))
+        return samples
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        sample = self.samples[idx]
+
+        # 入力: SNSテキスト
+        input_text = sample["sns_text"]
+
+        # 出力: 絵文字列
+        output_text = sample["emoji_string"]
+
+        # トークナイズ
+        input_encoding = self.tokenizer(
+            input_text,
+            max_length=self.max_input_length,
+            padding="max_length",
+            truncation=True,
+            return_tensors="pt"
+        )
+
+        output_encoding = self.tokenizer(
+            output_text,
+            max_length=self.max_output_length,
+            padding="max_length",
+            truncation=True,
+            return_tensors="pt"
+        )
+
+        return {
+            "input_ids": input_encoding["input_ids"].squeeze(),
+            "attention_mask": input_encoding["attention_mask"].squeeze(),
+            "labels": output_encoding["input_ids"].squeeze()
+        }
+```
+
+### 6.2 絵文字トークン追加
+
+```python
+from transformers import T5Tokenizer, T5ForConditionalGeneration
+
+def setup_model_with_emoji_tokens(model_name: str = "sonoisa/t5-base-japanese"):
+    """絵文字トークンを追加したモデルを準備"""
+    tokenizer = T5Tokenizer.from_pretrained(model_name, legacy=False)
+    model = T5ForConditionalGeneration.from_pretrained(model_name)
+
+    # 絵文字を特殊トークンとして追加
+    emoji_tokens = list(get_all_emojis())
+    num_added = tokenizer.add_tokens(emoji_tokens)
+    print(f"Added {num_added} emoji tokens")
+
+    # 埋め込み層をリサイズ
+    model.resize_token_embeddings(len(tokenizer))
+
+    return tokenizer, model
+```
+
+### 6.3 学習ループ
+
+```python
+from transformers import Trainer, TrainingArguments
+
+def train_model(
+    model,
+    tokenizer,
+    train_dataset,
+    eval_dataset,
+    output_dir: str = "outputs/models"
+):
+    training_args = TrainingArguments(
+        output_dir=output_dir,
+        num_train_epochs=10,
+        per_device_train_batch_size=16,
+        per_device_eval_batch_size=16,
+        learning_rate=1e-3,
+        weight_decay=0.01,
+        evaluation_strategy="epoch",
+        save_strategy="epoch",
+        load_best_model_at_end=True,
+        metric_for_best_model="eval_loss",
+        greater_is_better=False,
+        logging_steps=100,
+        warmup_steps=500,
+        fp16=True,  # A100では有効
+    )
+
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
+    )
+
+    trainer.train()
+    return trainer
+```
+
+## 7. 推論
+
+```python
+def translate_to_emoji(
+    model,
+    tokenizer,
+    text: str,
+    max_length: int = 32,
+    num_beams: int = 4
+) -> str:
+    """テキストから絵文字を生成"""
+    inputs = tokenizer(
+        text,
+        return_tensors="pt",
+        max_length=128,
+        truncation=True
+    ).to(model.device)
+
+    outputs = model.generate(
+        **inputs,
+        max_length=max_length,
+        num_beams=num_beams,
+        early_stopping=True
+    )
+
+    result = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    return result
+
+# 使用例
+emojis = translate_to_emoji(model, tokenizer, "今日は楽しかった")
+print(emojis)  # 😊 🎉
+```
+
+## 8. トラブルシューティング
+
+### OOMエラー（GPU メモリ不足）
+
+```python
+# バッチサイズを小さくする
+training_args.per_device_train_batch_size = 8
+
+# 勾配累積を使う
+training_args.gradient_accumulation_steps = 2
+
+# FP16を有効にする（A100では標準で有効）
+training_args.fp16 = True
+```
+
+### 絵文字がOOVになる
+
+```python
+# トークナイザに絵文字を追加したか確認
+print(tokenizer.encode("😊"))  # [絵文字のID, </s>]
+
+# 追加されていない場合は再度追加
+tokenizer.add_tokens(["😊", "🎉", ...])
+model.resize_token_embeddings(len(tokenizer))
+```
+
+### API呼び出しエラー
+
+```python
+# タイムアウトを延長
+client = httpx.Client(timeout=120.0)
+
+# リトライ設定を調整
+@retry(stop=stop_after_attempt(5), wait=wait_exponential(max=120))
+def call_api(...):
+    ...
+```
