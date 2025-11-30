@@ -25,6 +25,9 @@ mise install
 
 # 依存関係同期（.venv と uv.lock を生成）
 UV_CACHE_DIR=.uv-cache uv sync
+
+# （pip 互換の要件ファイルが必要な場合）
+uv export --format requirements-txt > requirements.txt
 ```
 
 `uv run <cmd>` で .venv を自動利用できます。手動で有効化したい場合は `source .venv/bin/activate`。
