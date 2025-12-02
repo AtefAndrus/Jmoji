@@ -6,8 +6,8 @@
 
 ```bash
 # リポジトリクローン
-git clone https://github.com/your-username/j-moji.git
-cd j-moji
+git clone https://github.com/AtefAndrus/Jmoji.git
+cd Jmoji
 
 # mise でツールを取得（Python 3.12 / uv latest）
 mise install
@@ -31,8 +31,8 @@ cp .env.example .env
 
 ```python
 # リポジトリクローン
-!git clone https://github.com/your-username/j-moji.git
-%cd j-moji
+!git clone https://github.com/AtefAndrus/Jmoji.git
+%cd Jmoji
 
 # uv をインストールして同期（Colab はシステム Python を利用）
 !pip install -q uv
@@ -45,7 +45,7 @@ os.environ["OPENROUTER_API_KEY"] = userdata.get("OPENROUTER_API_KEY")
 
 # src/ をインポート可能にする
 import sys
-sys.path.append("/content/j-moji")
+sys.path.append("/content/Jmoji")
 ```
 
 ## 2. データパイプライン
@@ -102,6 +102,45 @@ def normalize_text(text: str) -> str:
     text = text.strip()
 
     return text
+```
+
+### 2.4 NSFWコンテンツフィルタ
+
+WikipediaにはNSFW（性的・暴力的）な記事が存在し、Claude APIがこれらの処理を拒否する可能性がある。
+事前フィルタリングでAPIコストを削減し、拒否率を監視する。
+
+```python
+from typing import Optional, Set
+
+# デフォルトのNSFWキーワード
+DEFAULT_NSFW_KEYWORDS: Set[str] = {
+    "性行為", "性交", "ポルノ", "アダルト", "風俗",
+    "売春", "淫行", "殺人", "虐殺", "拷問", "処刑", "惨殺",
+}
+
+def is_safe_sentence(text: str, keywords: Optional[Set[str]] = None) -> bool:
+    """NSFWキーワードを含まないかチェック"""
+    if keywords is None:
+        keywords = DEFAULT_NSFW_KEYWORDS
+    return not any(kw in text for kw in keywords)
+
+def filter_safe_sentences(sentences: list[str], keywords: Optional[Set[str]] = None) -> list[str]:
+    """NSFWキーワードを含む文をフィルタリング"""
+    if keywords is None:
+        keywords = DEFAULT_NSFW_KEYWORDS
+    return [s for s in sentences if is_safe_sentence(s, keywords)]
+```
+
+設定ファイル（`configs/default.yaml`）でキーワードをカスタマイズ可能:
+
+```yaml
+data:
+  nsfw_filter:
+    enabled: true
+    keywords:
+      - "性行為"
+      - "殺人"
+      # ... 必要に応じて追加
 ```
 
 ## 3. 教師LLM（Claude）呼び出し
@@ -232,6 +271,7 @@ OpenRouter経由でClaude（Haiku等）を使用する場合、Anthropicのレ�
 | `anthropic-ratelimit-tokens-remaining` | 残りトークン数 |
 
 参考:
+
 - [Anthropic Rate Limits](https://docs.anthropic.com/en/api/rate-limits)
 - [OpenRouter Rate Limits](https://openrouter.ai/docs/api/reference/limits)
 
@@ -304,8 +344,49 @@ async def batch_generate_async(
 | 1リクエストあたり | 約 $0.00034 |
 
 **スケール見積もり:**
+
 - 10,000サンプル: 約 $6.8
 - 100,000サンプル: 約 $68
+
+### 3.7 コンテンツポリシー拒否の検出
+
+OpenRouter経由でClaudeを使用する場合、NSFWコンテンツはコンテンツモデレーションにより拒否される。
+エラーを検出してログに記録し、拒否率を監視する。
+
+```python
+import httpx
+
+def is_content_policy_error(error: Exception) -> bool:
+    """APIコンテンツポリシー拒否かどうかを判定"""
+    if isinstance(error, httpx.HTTPStatusError):
+        # 403: コンテンツモデレーション違反
+        if error.response.status_code == 403:
+            return True
+        # レスポンスにmoderation/content/flagged/policyキーワードがあるか確認
+        try:
+            body = error.response.text.lower()
+            if any(kw in body for kw in ["moderation", "content", "flagged", "policy"]):
+                return True
+        except Exception:
+            pass
+    return False
+```
+
+**OpenRouterの403エラーレスポンス:**
+
+```json
+{
+  "error": {
+    "code": 403,
+    "message": "Content moderation violation",
+    "metadata": {
+      "reasons": ["violence"],
+      "flagged_input": "...",
+      "provider_name": "anthropic"
+    }
+  }
+}
+```
 
 ## 4. 絵文字処理
 

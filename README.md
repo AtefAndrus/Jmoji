@@ -42,14 +42,24 @@ cp .env.example .env
 ## プロジェクト構成
 
 ```text
-j-moji/
-├── configs/          # 設定ファイル
+Jmoji/
+├── configs/          # 設定ファイル（YAML）
+│   └── default.yaml  # デフォルト設定
 ├── data/             # データセット
+│   └── outputs/      # 生成されたデータセット
 ├── docs/             # ドキュメント
 ├── notebooks/        # Jupyter notebooks
-├── outputs/          # 学習済みモデル・ログ
+├── outputs/          # 学習済みモデル・ログ・評価結果
 ├── scripts/          # CLIスクリプト
-└── src/              # ソースコード
+│   ├── generate_dataset.py  # データセット生成
+│   └── train.py             # モデル学習
+├── src/              # ソースコード
+│   ├── config.py            # 設定ロード
+│   ├── data/                # データ処理
+│   ├── evaluation/          # 評価指標
+│   ├── generation/          # データセット生成
+│   └── models/              # モデル
+└── tests/            # テスト
 ```
 
 詳細は [docs/](docs/) を参照してください。
@@ -59,8 +69,27 @@ j-moji/
 ### データセット生成
 
 ```bash
+# 基本的な使用方法
 uv run scripts/generate_dataset.py --config configs/default.yaml
+
+# 非同期モード（並列リクエストで高速化）
+uv run scripts/generate_dataset.py --config configs/default.yaml --async
+
+# 途中から再開しない（最初から生成）
+uv run scripts/generate_dataset.py --config configs/default.yaml --no-resume
+
+# NSFWフィルタを無効化
+uv run scripts/generate_dataset.py --config configs/default.yaml --no-nsfw-filter
 ```
+
+**オプション:**
+
+| オプション | 説明 |
+|-----------|------|
+| `--config` | 設定ファイルのパス（デフォルト: `configs/default.yaml`） |
+| `--async` | 非同期モードで並列リクエスト |
+| `--no-resume` | 既存ファイルがあっても最初から生成 |
+| `--no-nsfw-filter` | NSFWフィルタを無効化 |
 
 ### モデル学習
 
@@ -68,14 +97,17 @@ uv run scripts/generate_dataset.py --config configs/default.yaml
 uv run scripts/train.py --config configs/default.yaml
 ```
 
-### 推論
+### 開発コマンド
 
-```python
-from src.models.t5_trainer import EmojiTranslator
+```bash
+# テスト実行
+uv run pytest tests/ -v
 
-model = EmojiTranslator.load("outputs/models/best_model")
-emojis = model.translate("今日はいい天気ですね")
-print(emojis)  # 😊 ☀️
+# リント
+uv run ruff check src/ scripts/ tests/
+
+# 型チェック
+uv run mypy src/ scripts/
 ```
 
 ## ドキュメント
@@ -88,7 +120,8 @@ print(emojis)  # 😊 ☀️
 ## 開発環境
 
 - Python 3.12
-- Google Colab Pro（A100 80GB）
+- パッケージ管理: uv + mise
+- Google Colab Pro（A100 80GB）での学習を想定
 - 教師モデル: Claude Haiku 4.5（OpenRouter経由）
 
 ## ライセンス
