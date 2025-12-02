@@ -1,6 +1,8 @@
+from pathlib import Path
+
 import torch
 
-from src.models.t5_trainer import EmojiDataset, split_dataset
+from src.models.t5_trainer import EmojiDataset, load_jsonl, split_dataset
 
 
 class FakeTokenizer:
@@ -62,3 +64,27 @@ def test_split_dataset_no_shuffle():
     assert [s["id"] for s in train] == [0, 1, 2, 3, 4, 5]
     assert [s["id"] for s in val] == [6, 7]
     assert [s["id"] for s in test] == [8, 9]
+
+
+def test_load_jsonl(tmp_path: Path):
+    """JSONLファイルを正しく読み込めることを確認"""
+    jsonl_file = tmp_path / "test.jsonl"
+    jsonl_file.write_text(
+        '{"sns_text": "テスト1", "emoji_string": "😊"}\n'
+        '{"sns_text": "テスト2", "emoji_string": "🎉"}\n',
+        encoding="utf-8",
+    )
+
+    data = load_jsonl(jsonl_file)
+    assert len(data) == 2
+    assert data[0]["sns_text"] == "テスト1"
+    assert data[1]["emoji_string"] == "🎉"
+
+
+def test_load_jsonl_empty(tmp_path: Path):
+    """空のJSONLファイルは空リストを返す"""
+    jsonl_file = tmp_path / "empty.jsonl"
+    jsonl_file.write_text("", encoding="utf-8")
+
+    data = load_jsonl(jsonl_file)
+    assert data == []
