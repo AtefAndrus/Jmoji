@@ -6,6 +6,8 @@ from src.models.t5_trainer import EmojiDataset, load_jsonl, split_dataset
 
 
 class FakeTokenizer:
+    pad_token_id = 0
+
     def __call__(
         self,
         text,

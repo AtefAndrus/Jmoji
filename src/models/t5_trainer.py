@@ -59,10 +59,14 @@ class EmojiDataset(Dataset):
             return_tensors="pt",
         )
 
+        # パディングトークンを-100に置き換え（損失計算から除外）
+        labels = output_encoding["input_ids"].squeeze(0).clone()
+        labels[labels == self.tokenizer.pad_token_id] = -100
+
         return {
             "input_ids": input_encoding["input_ids"].squeeze(0),
             "attention_mask": input_encoding["attention_mask"].squeeze(0),
-            "labels": output_encoding["input_ids"].squeeze(0),
+            "labels": labels,
         }
 
 
