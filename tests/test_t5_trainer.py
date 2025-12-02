@@ -35,8 +35,30 @@ def test_emoji_dataset_shapes():
 
 
 def test_split_dataset():
-    samples = list(range(10))
+    samples = [{"id": i} for i in range(10)]
     train, val, test = split_dataset(samples, 0.6, 0.2)
     assert len(train) == 6
     assert len(val) == 2
     assert len(test) == 2
+
+
+def test_split_dataset_shuffle_with_seed():
+    """同じseedで同じ結果、異なるseedで異なる結果になることを確認"""
+    samples = [{"id": i} for i in range(100)]
+
+    train1, _, _ = split_dataset(samples, 0.8, 0.1, seed=42)
+    train2, _, _ = split_dataset(samples, 0.8, 0.1, seed=42)
+    train3, _, _ = split_dataset(samples, 0.8, 0.1, seed=123)
+
+    assert train1 == train2  # 同じseedなら同じ結果
+    assert train1 != train3  # 異なるseedなら異なる結果
+
+
+def test_split_dataset_no_shuffle():
+    """shuffle=Falseで順序が保持されることを確認"""
+    samples = [{"id": i} for i in range(10)]
+    train, val, test = split_dataset(samples, 0.6, 0.2, shuffle=False)
+
+    assert [s["id"] for s in train] == [0, 1, 2, 3, 4, 5]
+    assert [s["id"] for s in val] == [6, 7]
+    assert [s["id"] for s in test] == [8, 9]
