@@ -3,11 +3,15 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 from src.config import load_config
 from src.data.text_preprocessor import normalize_text
 from src.data.wikipedia_loader import load_wikipedia_sentences
 from src.generation.dataset_generator import generate_dataset
 from src.generation.openrouter_client import OpenRouterClient
+
+load_dotenv()
 
 
 def main() -> None:
