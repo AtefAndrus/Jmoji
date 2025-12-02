@@ -40,11 +40,11 @@ EVAL_DIR = "/content/Jmoji/outputs/evaluation"
 # 学習設定
 CONFIG = {
     "model_name": "sonoisa/t5-base-japanese",
-    "num_epochs": 30,
+    "num_epochs": 50,
     "batch_size": 16,
-    "learning_rate": 5e-4,
+    "learning_rate": 3e-4,
     "weight_decay": 0.01,
-    "warmup_steps": 100,
+    "warmup_steps": 150,
     "max_input_length": 128,
     "max_output_length": 32,
     "train_ratio": 0.8,
@@ -52,6 +52,7 @@ CONFIG = {
     "test_ratio": 0.1,
     "fp16": False,  # NaN防止のためオフ
     "logging_steps": 50,
+    "label_smoothing": 0.1,  # mode collapse対策
 }
 
 print("Config:")
@@ -102,6 +103,33 @@ print(f"Train: {len(train_samples)}, Val: {len(val_samples)}, Test: {len(test_sa
 print("\nSample data:")
 for i, s in enumerate(train_samples[:3]):
     print(f"  [{i}] {s['sns_text'][:50]}... -> {s['emoji_string']}")
+
+# %% [markdown]
+# ## 3.5 絵文字分布の確認
+
+# %%
+from collections import Counter
+
+# 全サンプルの絵文字を集計
+all_emojis = []
+for sample in samples:
+    emojis = sample["emoji_string"].split()
+    all_emojis.extend(emojis)
+
+# 頻度カウント
+emoji_counts = Counter(all_emojis)
+print(f"Total emoji occurrences: {len(all_emojis)}")
+print(f"Unique emojis: {len(emoji_counts)}")
+print("\nTop 20 emojis:")
+for emoji, count in emoji_counts.most_common(20):
+    pct = count / len(all_emojis) * 100
+    print(f"  {emoji}: {count} ({pct:.1f}%)")
+
+# 最頻出絵文字の割合を警告
+top_emoji, top_count = emoji_counts.most_common(1)[0]
+top_pct = top_count / len(all_emojis) * 100
+if top_pct > 15:
+    print(f"\n⚠️ Warning: '{top_emoji}' is {top_pct:.1f}% of all emojis. This may cause mode collapse.")
 
 # %% [markdown]
 # ## 4. モデル・トークナイザ準備
@@ -236,6 +264,7 @@ training_args = TrainingArguments(
     logging_steps=CONFIG["logging_steps"],
     warmup_steps=CONFIG["warmup_steps"],
     fp16=CONFIG["fp16"],
+    label_smoothing_factor=CONFIG["label_smoothing"],  # mode collapse対策
     report_to="none",  # wandbを無効化
     save_total_limit=3,  # チェックポイント数を制限
 )
@@ -275,7 +304,7 @@ with open(f"{EVAL_DIR}/train_eval_results.txt", "w") as f:
 # ## 7. 推論テスト
 
 # %%
-def generate_emoji(model, tokenizer, text, max_length=32, num_beams=4):
+def generate_emoji(model, tokenizer, text, max_length=32, use_sampling=True):
     """テキストから絵文字を生成"""
     model.eval()
     inputs = tokenizer(
@@ -288,25 +317,51 @@ def generate_emoji(model, tokenizer, text, max_length=32, num_beams=4):
         inputs = {k: v.to("cuda") for k, v in inputs.items()}
 
     with torch.no_grad():
-        outputs = model.generate(
-            **inputs,
-            max_length=max_length,
-            num_beams=num_beams,
-            early_stopping=True
-        )
+        if use_sampling:
+            # Temperature sampling（多様性重視）
+            outputs = model.generate(
+                **inputs,
+                max_length=max_length,
+                do_sample=True,
+                temperature=1.0,
+                top_k=50,
+                top_p=0.95,
+            )
+        else:
+            # Beam search（精度重視）
+            outputs = model.generate(
+                **inputs,
+                max_length=max_length,
+                num_beams=4,
+                early_stopping=True
+            )
 
     return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
 # 学習データでテスト（暗記確認）
-print("=== 学習データでのテスト ===")
+print("=== 学習データでのテスト（Sampling） ===")
 for sample in train_samples[:5]:
     text = sample["sns_text"]
     expected = sample["emoji_string"]
-    result = generate_emoji(model, tokenizer, text)
+    result = generate_emoji(model, tokenizer, text, use_sampling=True)
     match = "OK" if result.strip() == expected.strip() else "NG"
     print(f"[{match}] 入力: {text[:40]}...")
     print(f"     期待: {expected}")
     print(f"     出力: {result}")
+    print()
+
+# %%
+# Beam search との比較
+print("=== Beam Search vs Sampling 比較 ===")
+for sample in train_samples[:3]:
+    text = sample["sns_text"]
+    expected = sample["emoji_string"]
+    result_beam = generate_emoji(model, tokenizer, text, use_sampling=False)
+    result_sample = generate_emoji(model, tokenizer, text, use_sampling=True)
+    print(f"入力: {text[:40]}...")
+    print(f"  期待: {expected}")
+    print(f"  Beam: {result_beam}")
+    print(f"  Sample: {result_sample}")
     print()
 
 # %%
@@ -322,7 +377,7 @@ test_texts = [
 ]
 
 for text in test_texts:
-    result = generate_emoji(model, tokenizer, text)
+    result = generate_emoji(model, tokenizer, text, use_sampling=True)
     print(f"入力: {text}")
     print(f"出力: {result}")
     print()

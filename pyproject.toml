@@ -20,6 +20,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "jupytext>=1.18.1",
     "mypy>=1.19.0",
     "pytest>=9.0.1",
     "pytest-asyncio>=0.24.0",

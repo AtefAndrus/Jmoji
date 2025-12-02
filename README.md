@@ -2,6 +2,8 @@
 
 知識蒸留を用いた日本語テキスト→絵文字翻訳モデル
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AtefAndrus/Jmoji/blob/main/notebooks/train_t5.ipynb)
+
 ## 概要
 
 日本語テキストから、その文の意味・ニュアンス・トーンを表現する絵文字列（1〜5個）を生成するモデルを開発するプロジェクトです。
@@ -93,9 +95,17 @@ uv run scripts/generate_dataset.py --config configs/default.yaml --no-nsfw-filte
 
 ### モデル学習
 
+**ローカル:**
+
 ```bash
 uv run scripts/train.py --config configs/default.yaml
 ```
+
+**Google Colab（推奨）:**
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AtefAndrus/Jmoji/blob/main/notebooks/train_t5.ipynb)
+
+上のバッジをクリックしてノートブックを開き、上から順に実行してください。A100 GPUを推奨します。
 
 ### 開発コマンド
 
