@@ -46,3 +46,110 @@
 - [ ] ベースラインvs学生モデルの自動評価レポート
 - [ ] 人手評価フレームの整備と評価者リクルート
 - [ ] エラー分析テンプレートでの事例収集
+
+---
+
+## 未実装: NSFWコンテンツ対策
+
+### 背景
+
+WikipediaにはNSFW（性的・暴力的）な記事が存在し、Claude APIがこれらの処理を拒否する可能性がある。
+現状はエラー時にスキップするが、拒否率が高いとコスト効率が低下する。
+
+### 実装方針: A（キーワードフィルタ）+ C（ログ監視）
+
+#### A. キーワードブラックリストによる事前フィルタ
+
+**変更ファイル:** `src/data/text_preprocessor.py`
+
+```python
+# NSFWキーワードブラックリスト
+NSFW_KEYWORDS: set[str] = {
+    # 性的コンテンツ
+    "性行為", "性交", "ポルノ", "アダルト", "風俗",
+    # 暴力的コンテンツ
+    "殺人", "虐殺", "拷問", "処刑",
+    # 必要に応じて追加
+}
+
+def is_safe_sentence(text: str) -> bool:
+    """NSFWキーワードを含まないかチェック"""
+    return not any(kw in text for kw in NSFW_KEYWORDS)
+```
+
+**変更ファイル:** `src/data/wikipedia_loader.py`
+
+```python
+from src.data.text_preprocessor import is_safe_sentence
+
+# extract_sentences の結果をフィルタ
+sents = [s for s in extract_sentences(text, ...) if is_safe_sentence(s)]
+```
+
+#### C. API拒否のログ記録
+
+**変更ファイル:** `src/generation/dataset_generator.py`
+
+```python
+# エラー種別を記録
+except httpx.HTTPStatusError as e:
+    if "content_policy" in str(e) or e.response.status_code == 400:
+        logger.warning(f"Content policy rejection at {idx}: {sentence[:50]}...")
+        stats.content_rejections += 1
+    else:
+        stats.errors += 1
+```
+
+**GenerationStats に追加:**
+
+```python
+@dataclass
+class GenerationStats:
+    ...
+    content_rejections: int = 0  # API拒否数
+```
+
+### 設定
+
+`configs/default.yaml` に追加:
+
+```yaml
+data:
+  nsfw_filter: true  # NSFWフィルタを有効にするか
+```
+
+### テスト
+
+- `is_safe_sentence` の単体テスト
+- 既知のNSFWキーワードを含む文がフィルタされることを確認
+
+### 優先度
+
+中（大規模データ生成前に実装推奨）
+
+### 要調査
+
+**API拒否の判定ロジック:**
+
+現在の案:
+
+```python
+if "content_policy" in str(e) or e.response.status_code == 400:
+```
+
+確認が必要な点:
+
+1. OpenRouter経由でClaudeのコンテンツポリシー拒否が発生した場合のHTTPステータスコード（400? 403? 422?）
+2. エラーレスポンスのJSON構造（`error.type`, `error.code` 等のフィールド）
+3. `content_policy` というキーワードが実際に含まれるか
+
+調査方法:
+
+- OpenRouterドキュメントのエラーハンドリングセクションを確認
+- Anthropic APIドキュメントのエラーコード一覧を確認
+- 実際にNSFWコンテンツを送信してエラーレスポンスを観察（テスト環境で）
+
+参考リンク:
+
+- <https://openrouter.ai/docs/api/reference/errors>
+- <https://platform.claude.com/docs/en/api/errors>
