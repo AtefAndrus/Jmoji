@@ -4,11 +4,12 @@ import argparse
 import asyncio
 import logging
 from pathlib import Path
+from typing import Optional, Set
 
 from dotenv import load_dotenv
 
 from src.config import load_config
-from src.data.text_preprocessor import normalize_text
+from src.data.text_preprocessor import filter_safe_sentences, normalize_text
 from src.data.wikipedia_loader import load_wikipedia_sentences
 from src.generation.dataset_generator import generate_dataset, generate_dataset_async
 from src.generation.openrouter_client import AsyncOpenRouterClient, OpenRouterClient
@@ -22,11 +23,23 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def _get_nsfw_keywords(data_cfg: dict) -> Optional[Set[str]]:
+    """設定からNSFWキーワードを取得"""
+    nsfw_cfg = data_cfg.get("nsfw_filter", {})
+    if not nsfw_cfg.get("enabled", True):
+        return None
+    keywords = nsfw_cfg.get("keywords", [])
+    if keywords:
+        return set(keywords)
+    return None  # デフォルトキーワードを使用
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate emoji dataset from Wikipedia")
     parser.add_argument("--config", default="configs/default.yaml", help="Config file path")
     parser.add_argument("--async", dest="use_async", action="store_true", help="Use async mode")
     parser.add_argument("--no-resume", dest="resume", action="store_false", help="Don't resume from existing file")
+    parser.add_argument("--no-nsfw-filter", dest="nsfw_filter", action="store_false", help="Disable NSFW filter")
     args = parser.parse_args()
 
     cfg = load_config(args.config)
@@ -49,6 +62,15 @@ def main() -> None:
     sentences = [normalize_text(s) for s in sentences]
     logger.info(f"Loaded {len(sentences)} sentences")
 
+    # NSFWフィルタ適用
+    if args.nsfw_filter:
+        nsfw_keywords = _get_nsfw_keywords(data_cfg)
+        original_count = len(sentences)
+        sentences = filter_safe_sentences(sentences, nsfw_keywords)
+        filtered_count = original_count - len(sentences)
+        if filtered_count > 0:
+            logger.info(f"NSFW filter: removed {filtered_count} sentences, {len(sentences)} remaining")
+
     output_dir = Path(data_cfg.get("output_dir", "data/outputs"))
     output_file = data_cfg.get("output_filename", "dataset_v1.jsonl")
     output_path = output_dir / output_file
@@ -62,6 +84,7 @@ def main() -> None:
                 teacher_cfg=teacher_cfg,
                 emoji_cfg=emoji_cfg,
                 data_cfg=data_cfg,
+                resume=args.resume,
             )
         )
     else:
@@ -113,6 +136,7 @@ async def _run_async(
     teacher_cfg: dict,
     emoji_cfg: dict,
     data_cfg: dict,
+    resume: bool,
 ) -> None:
     """非同期モードでデータセット生成"""
     async with AsyncOpenRouterClient(
@@ -129,6 +153,7 @@ async def _run_async(
             min_emoji_count=int(emoji_cfg.get("min_count", 1)),
             max_emoji_count=int(emoji_cfg.get("max_count", 5)),
             preview_interval=int(data_cfg.get("preview_interval", 50)),
+            resume=resume,
         )
 
 

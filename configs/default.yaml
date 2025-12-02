@@ -16,6 +16,26 @@ data:
   min_text_length: 10      # 最小文字数
   max_text_length: 100     # 最大文字数
 
+  # NSFWコンテンツフィルタ
+  nsfw_filter:
+    enabled: true
+    # キーワードブラックリスト（部分一致でフィルタ）
+    keywords:
+      # 性的コンテンツ
+      - "性行為"
+      - "性交"
+      - "ポルノ"
+      - "アダルト"
+      - "風俗"
+      - "売春"
+      - "淫行"
+      # 暴力的コンテンツ
+      - "殺人"
+      - "虐殺"
+      - "拷問"
+      - "処刑"
+      - "惨殺"
+
   # 出力パス
   output_dir: "data/outputs"
   output_filename: "dataset_v1.jsonl"

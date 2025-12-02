@@ -1,4 +1,10 @@
-from src.data.text_preprocessor import extract_sentences, normalize_text
+from src.data.text_preprocessor import (
+    DEFAULT_NSFW_KEYWORDS,
+    extract_sentences,
+    filter_safe_sentences,
+    is_safe_sentence,
+    normalize_text,
+)
 
 
 def test_normalize_text():
@@ -53,3 +59,48 @@ def test_extract_sentences_no_japanese():
     text = "Hello World! This is English."
     sents = extract_sentences(text, min_len=1, max_len=100)
     assert sents == []
+
+
+# NSFWフィルタのテスト
+def test_is_safe_sentence_with_default_keywords():
+    """デフォルトキーワードでNSFW文を検出"""
+    assert is_safe_sentence("今日は良い天気です。") is True
+    assert is_safe_sentence("殺人事件が発生した。") is False
+    assert is_safe_sentence("ポルノグラフィーの歴史") is False
+
+
+def test_is_safe_sentence_with_custom_keywords():
+    """カスタムキーワードでNSFW文を検出"""
+    custom_keywords = {"テスト", "危険"}
+    assert is_safe_sentence("これはテストです。", custom_keywords) is False
+    assert is_safe_sentence("安全な文章です。", custom_keywords) is True
+    assert is_safe_sentence("危険な行為", custom_keywords) is False
+
+
+def test_filter_safe_sentences():
+    """NSFWフィルタが複数文を正しくフィルタリング"""
+    sentences = [
+        "今日は良い天気です。",
+        "殺人事件のニュース。",
+        "明日は雨かもしれない。",
+        "ポルノサイトへのリンク。",
+    ]
+    result = filter_safe_sentences(sentences)
+    assert len(result) == 2
+    assert "今日は良い天気です。" in result
+    assert "明日は雨かもしれない。" in result
+
+
+def test_filter_safe_sentences_with_custom_keywords():
+    """カスタムキーワードでのフィルタリング"""
+    sentences = ["テストA", "テストB", "本番"]
+    custom_keywords = {"テスト"}
+    result = filter_safe_sentences(sentences, custom_keywords)
+    assert result == ["本番"]
+
+
+def test_default_nsfw_keywords_is_set():
+    """DEFAULT_NSFW_KEYWORDSがセットであること"""
+    assert isinstance(DEFAULT_NSFW_KEYWORDS, set)
+    assert len(DEFAULT_NSFW_KEYWORDS) > 0
+    assert "殺人" in DEFAULT_NSFW_KEYWORDS

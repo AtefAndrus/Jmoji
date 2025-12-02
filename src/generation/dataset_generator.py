@@ -8,6 +8,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
 
+import httpx
 from tqdm import tqdm
 from tqdm.asyncio import tqdm as atqdm
 
@@ -33,11 +34,31 @@ class GenerationStats:
     success: int = 0
     skipped: int = 0
     errors: int = 0
+    content_rejections: int = 0  # APIコンテンツポリシー拒否数
 
     def success_rate(self) -> float:
         if self.total == 0:
             return 0.0
         return self.success / self.total * 100
+
+
+def is_content_policy_error(error: Exception) -> bool:
+    """APIコンテンツポリシー拒否かどうかを判定。
+
+    OpenRouter経由の場合、コンテンツモデレーション違反は403で返される。
+    error.metadataにreasonsが含まれる。
+    """
+    if isinstance(error, httpx.HTTPStatusError):
+        if error.response.status_code == 403:
+            return True
+        # レスポンスボディにmoderationやcontent関連のキーワードがあるか確認
+        try:
+            body = error.response.text.lower()
+            if any(kw in body for kw in ["moderation", "content", "flagged", "policy"]):
+                return True
+        except Exception:
+            pass
+    return False
 
 
 def validate_sample(sample: DataSample, min_count: int = 1, max_count: int = 5) -> bool:
@@ -191,8 +212,15 @@ def generate_dataset(
                 logger.debug(f"Sample {global_idx} skipped (validation failed)")
 
         except Exception as e:
-            stats.errors += 1
-            logger.warning(f"Error at index {global_idx}: {e}")
+            if is_content_policy_error(e):
+                stats.content_rejections += 1
+                logger.warning(
+                    f"Content policy rejection at {global_idx}: "
+                    f"{sentence[:50]}..."
+                )
+            else:
+                stats.errors += 1
+                logger.warning(f"Error at index {global_idx}: {e}")
 
         # プログレスバー更新
         if pbar:
@@ -200,6 +228,7 @@ def generate_dataset(
                 success=stats.success,
                 skip=stats.skipped,
                 err=stats.errors,
+                rej=stats.content_rejections,
                 rate=f"{stats.success_rate():.1f}%",
             )
             pbar.update(1)
@@ -239,10 +268,11 @@ def _print_final_stats(stats: GenerationStats) -> None:
     print("\n" + "=" * 50)
     print("Generation Complete")
     print("=" * 50)
-    print(f"  Total processed: {stats.total}")
-    print(f"  Success:         {stats.success} ({stats.success_rate():.1f}%)")
-    print(f"  Skipped:         {stats.skipped}")
-    print(f"  Errors:          {stats.errors}")
+    print(f"  Total processed:      {stats.total}")
+    print(f"  Success:              {stats.success} ({stats.success_rate():.1f}%)")
+    print(f"  Skipped:              {stats.skipped}")
+    print(f"  Errors:               {stats.errors}")
+    print(f"  Content rejections:   {stats.content_rejections}")
     print("=" * 50)
 
 
@@ -256,7 +286,7 @@ async def _process_single_async(
     """1件の非同期処理
 
     Returns:
-        (idx, sample or None, status): status is "success", "skipped", or "error"
+        (idx, sample or None, status): status is "success", "skipped", "error", or "content_rejection"
     """
     try:
         sns_text = (
@@ -279,6 +309,9 @@ async def _process_single_async(
             return (idx, None, "skipped")
 
     except Exception as e:
+        if is_content_policy_error(e):
+            logger.warning(f"Content policy rejection at {idx}: {sentence[:50]}...")
+            return (idx, None, "content_rejection")
         logger.warning(f"Error at index {idx}: {e}")
         return (idx, None, "error")
 
@@ -292,6 +325,7 @@ async def generate_dataset_async(
     max_emoji_count: int = 5,
     preview_interval: int = 50,
     show_progress: bool = True,
+    resume: bool = True,
 ) -> List[DataSample]:
     """非同期版データセット生成（並列リクエスト対応）
 
@@ -303,23 +337,42 @@ async def generate_dataset_async(
         max_emoji_count: 最大絵文字数
         preview_interval: 何件ごとにサンプルプレビューを表示するか
         show_progress: プログレスバーを表示するか
+        resume: 既存ファイルがあれば続きから再開するか
 
     Returns:
         生成されたDataSampleのリスト
     """
     stats = GenerationStats()
     samples: List[DataSample] = []
-    total = len(sentences)
 
-    # 出力ファイルをクリア
-    if output_path.exists():
+    # 再開処理
+    start_idx = 0
+    if resume and output_path.exists():
+        existing_count = count_existing_samples(output_path)
+        if existing_count > 0:
+            start_idx = existing_count
+            samples = load_dataset(output_path)
+            logger.info(f"Resuming from index {start_idx} ({existing_count} samples found)")
+            if show_progress:
+                print(f"[Resume] {existing_count} samples found, continuing from index {start_idx}")
+
+    # 新規開始の場合はファイルをクリア
+    if start_idx == 0 and output_path.exists():
         output_path.unlink()
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    sentences_to_process = sentences[start_idx:]
+    total = len(sentences_to_process)
+
+    if total == 0:
+        logger.info("No sentences to process")
+        return samples
 
     # タスク作成
     tasks = [
-        _process_single_async(client, sentence, idx, min_emoji_count, max_emoji_count)
-        for idx, sentence in enumerate(sentences)
+        _process_single_async(client, sentence, start_idx + idx, min_emoji_count, max_emoji_count)
+        for idx, sentence in enumerate(sentences_to_process)
     ]
 
     # 非同期実行（プログレスバー付き）
@@ -340,6 +393,8 @@ async def generate_dataset_async(
                 stats.success += 1
             elif status == "skipped":
                 stats.skipped += 1
+            elif status == "content_rejection":
+                stats.content_rejections += 1
             else:
                 stats.errors += 1
     else:
@@ -350,6 +405,8 @@ async def generate_dataset_async(
                 stats.success += 1
             elif status == "skipped":
                 stats.skipped += 1
+            elif status == "content_rejection":
+                stats.content_rejections += 1
             else:
                 stats.errors += 1
 
@@ -382,4 +439,5 @@ __all__ = [
     "append_sample",
     "load_dataset",
     "count_existing_samples",
+    "is_content_policy_error",
 ]

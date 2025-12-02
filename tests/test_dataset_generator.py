@@ -1,6 +1,8 @@
 import asyncio
 from pathlib import Path
+from unittest.mock import MagicMock
 
+import httpx
 import pytest
 
 from src.generation.dataset_generator import (
@@ -10,6 +12,7 @@ from src.generation.dataset_generator import (
     count_existing_samples,
     generate_dataset,
     generate_dataset_async,
+    is_content_policy_error,
     load_dataset,
     save_dataset,
     validate_sample,
@@ -357,3 +360,49 @@ async def test_generate_dataset_async_preserves_order(tmp_path: Path):
     # インデックス順にソートされているか確認
     for i, sample in enumerate(samples):
         assert sample.original_text == f"文{i + 1}"
+
+
+# =============================================================================
+# is_content_policy_error テスト
+# =============================================================================
+
+
+def test_is_content_policy_error_403():
+    """403エラーはコンテンツポリシーエラーとして判定"""
+    response = MagicMock()
+    response.status_code = 403
+    error = httpx.HTTPStatusError("403 Forbidden", request=MagicMock(), response=response)
+    assert is_content_policy_error(error) is True
+
+
+def test_is_content_policy_error_moderation_keyword():
+    """レスポンスにmoderationキーワードがある場合"""
+    response = MagicMock()
+    response.status_code = 400
+    response.text = '{"error": {"message": "Content moderation violation"}}'
+    error = httpx.HTTPStatusError("400 Bad Request", request=MagicMock(), response=response)
+    assert is_content_policy_error(error) is True
+
+
+def test_is_content_policy_error_flagged_keyword():
+    """レスポンスにflaggedキーワードがある場合"""
+    response = MagicMock()
+    response.status_code = 400
+    response.text = '{"error": {"message": "Input was flagged"}}'
+    error = httpx.HTTPStatusError("400 Bad Request", request=MagicMock(), response=response)
+    assert is_content_policy_error(error) is True
+
+
+def test_is_content_policy_error_regular_error():
+    """通常のエラーはコンテンツポリシーエラーではない"""
+    response = MagicMock()
+    response.status_code = 500
+    response.text = '{"error": {"message": "Internal server error"}}'
+    error = httpx.HTTPStatusError("500 Server Error", request=MagicMock(), response=response)
+    assert is_content_policy_error(error) is False
+
+
+def test_is_content_policy_error_non_http_error():
+    """HTTPエラー以外の例外はコンテンツポリシーエラーではない"""
+    error = ValueError("Something went wrong")
+    assert is_content_policy_error(error) is False
