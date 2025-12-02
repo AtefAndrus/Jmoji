@@ -9,7 +9,7 @@ data:
   wikipedia_dataset: "wikimedia/wikipedia"
 
   # サンプリング設定
-  max_samples: 1000
+  max_samples: 5000
   random_seed: 42
 
   # テキストフィルタリング
@@ -38,7 +38,7 @@ data:
 
   # 出力パス
   output_dir: "data/outputs"
-  output_filename: "dataset_v1.jsonl"
+  output_filename: "dataset_v2.jsonl"
 
   # 進捗表示設定
   checkpoint_interval: 100  # 何件ごとにチェックポイントログを出すか

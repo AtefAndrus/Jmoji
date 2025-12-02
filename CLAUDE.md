@@ -126,6 +126,11 @@ OPENROUTER_API_KEY=your_api_key_here
 - 大規模データ生成時はレート制限（`request_delay`）に注意
 - GPU学習はGoogle Colab Pro（A100）を想定
 - 絵文字は Emoji 16.0 準拠、肌色バリアントは基本絵文字に統合
+- **絵文字バランス**: ✨（キラキラ）が偏りやすくmode collapseの原因となるため、プロンプトで使用を禁止している
+
+## Colab学習
+
+`notebooks/train_t5.ipynb` でワンクリック学習が可能。READMEの「Open in Colab」バッジから起動できる。
 
 ## 進捗管理
 
