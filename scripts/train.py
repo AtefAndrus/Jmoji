@@ -48,7 +48,7 @@ def main() -> None:
         per_device_eval_batch_size=int(training_cfg.get("batch_size", 16)),
         learning_rate=float(training_cfg.get("learning_rate", 1e-3)),
         weight_decay=float(training_cfg.get("weight_decay", 0.01)),
-        evaluation_strategy=training_cfg.get("save_strategy", "epoch"),
+        evaluation_strategy=training_cfg.get("evaluation_strategy", "epoch"),
         save_strategy=training_cfg.get("save_strategy", "epoch"),
         load_best_model_at_end=training_cfg.get("early_stopping_patience", 0) > 0,
         metric_for_best_model=training_cfg.get("metric_for_best_model", "eval_loss"),

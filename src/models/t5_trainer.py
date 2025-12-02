@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import json
+import random
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import torch
 from torch.utils.data import Dataset
@@ -129,14 +130,24 @@ def build_trainer(
 
 
 def split_dataset(
-    samples: Sequence[Dict[str, Any]], train_ratio: float, val_ratio: float
+    samples: Sequence[Dict[str, Any]],
+    train_ratio: float,
+    val_ratio: float,
+    *,
+    shuffle: bool = True,
+    seed: Optional[int] = 42,
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]]]:
-    n = len(samples)
+    data = list(samples)
+    if shuffle:
+        if seed is not None:
+            random.seed(seed)
+        random.shuffle(data)
+    n = len(data)
     train_end = int(n * train_ratio)
     val_end = int(n * (train_ratio + val_ratio))
-    train = list(samples[:train_end])
-    val = list(samples[train_end:val_end])
-    test = list(samples[val_end:])
+    train = data[:train_end]
+    val = data[train_end:val_end]
+    test = data[val_end:]
     return train, val, test
 
 

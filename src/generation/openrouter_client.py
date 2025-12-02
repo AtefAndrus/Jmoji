@@ -10,7 +10,7 @@ import os
 from typing import Any, Dict, Iterable, List, Optional
 
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import Retrying, stop_after_attempt, wait_exponential
 
 
 class OpenRouterClient:
@@ -78,20 +78,16 @@ class OpenRouterClient:
         return payload
 
     # ------------------------------------------------------------------
-    @retry(
-        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=60)
-    )
-    def complete(
+    def _request(
         self,
-        prompt: str,
+        messages: List[Dict[str, str]],
         *,
-        temperature: float = 0.7,
-        max_tokens: int = 100,
         model: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
         extra: Optional[Dict[str, Any]] = None,
     ) -> str:
-        """テキストプロンプトを1ターンのmessagesに包んで送信。"""
-        messages = [{"role": "user", "content": prompt}]
+        """内部リクエスト処理（リトライなし）。"""
         payload = self._payload(
             messages,
             model=model,
@@ -109,6 +105,32 @@ class OpenRouterClient:
         return data["choices"][0]["message"]["content"]
 
     # ------------------------------------------------------------------
+    def complete(
+        self,
+        prompt: str,
+        *,
+        temperature: float = 0.7,
+        max_tokens: int = 100,
+        model: Optional[str] = None,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        """テキストプロンプトを1ターンのmessagesに包んで送信。"""
+        messages = [{"role": "user", "content": prompt}]
+        for attempt in Retrying(
+            stop=stop_after_attempt(self.max_retries),
+            wait=wait_exponential(multiplier=1, min=4, max=60),
+        ):
+            with attempt:
+                return self._request(
+                    messages,
+                    model=model,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    extra=extra,
+                )
+        raise RuntimeError("Unreachable")
+
+    # ------------------------------------------------------------------
     def chat(
         self,
         messages: List[Dict[str, str]],
@@ -119,21 +141,19 @@ class OpenRouterClient:
         extra: Optional[Dict[str, Any]] = None,
     ) -> str:
         """messagesをそのまま送るラッパ。"""
-        payload = self._payload(
-            messages,
-            model=model,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            extra=extra,
-        )
-        response = self._client.post(
-            f"{self.base_url}/chat/completions",
-            headers=self._headers(),
-            json=payload,
-        )
-        response.raise_for_status()
-        data = response.json()
-        return data["choices"][0]["message"]["content"]
+        for attempt in Retrying(
+            stop=stop_after_attempt(self.max_retries),
+            wait=wait_exponential(multiplier=1, min=4, max=60),
+        ):
+            with attempt:
+                return self._request(
+                    messages,
+                    model=model,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    extra=extra,
+                )
+        raise RuntimeError("Unreachable")
 
     # ------------------------------------------------------------------
     def stream(
