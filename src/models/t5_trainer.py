@@ -75,7 +75,7 @@ class TrainConfig:
     per_device_eval_batch_size: int = 16
     learning_rate: float = 1e-3
     weight_decay: float = 0.01
-    evaluation_strategy: str = "epoch"
+    eval_strategy: str = "epoch"
     save_strategy: str = "epoch"
     load_best_model_at_end: bool = True
     metric_for_best_model: str = "eval_loss"
@@ -111,7 +111,7 @@ def build_trainer(
         per_device_eval_batch_size=cfg.per_device_eval_batch_size,
         learning_rate=cfg.learning_rate,
         weight_decay=cfg.weight_decay,
-        evaluation_strategy=cfg.evaluation_strategy,
+        eval_strategy=cfg.eval_strategy,
         save_strategy=cfg.save_strategy,
         load_best_model_at_end=cfg.load_best_model_at_end,
         metric_for_best_model=cfg.metric_for_best_model,
@@ -119,7 +119,7 @@ def build_trainer(
         logging_steps=cfg.logging_steps,
         warmup_steps=cfg.warmup_steps,
         fp16=cfg.fp16,
-    )  # type: ignore[call-arg]
+    )
     return Trainer(
         model=model,
         args=args,
