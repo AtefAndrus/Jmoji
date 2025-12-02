@@ -199,6 +199,99 @@ def batch_generate(
     return results
 ```
 
+### 3.4 API レート制限の詳細
+
+#### Anthropic API のレート制限
+
+OpenRouter経由でClaude（Haiku等）を使用する場合、Anthropicのレート制限が適用される。
+
+| 制限種別 | 説明 |
+|---------|------|
+| RPM | Requests per minute（1分あたりのリクエスト数） |
+| ITPM | Input tokens per minute（1分あたりの入力トークン数） |
+| OTPM | Output tokens per minute（1分あたりの出力トークン数） |
+
+- **Tierベース**: 利用額に応じてTier 1〜4に自動昇格、制限が緩和される
+- **トークンバケット**: 連続補充型アルゴリズム。固定リセットではなく徐々に回復
+- **モデル別独立**: モデルごとに別々のレート制限が適用される
+
+#### OpenRouter経由の場合
+
+- OpenRouter自体は有料モデルにレート制限を設けない
+- プロバイダ（Anthropic）のレート制限がそのまま適用される
+- BYOK（Bring Your Own Key）の場合は自身のAnthropicアカウントの制限が適用
+
+#### 429エラー時の対応
+
+レスポンスヘッダーで制限状況を確認可能:
+
+| ヘッダー | 説明 |
+|---------|------|
+| `retry-after` | 待機すべき秒数 |
+| `anthropic-ratelimit-requests-remaining` | 残りリクエスト数 |
+| `anthropic-ratelimit-tokens-remaining` | 残りトークン数 |
+
+参考:
+- [Anthropic Rate Limits](https://docs.anthropic.com/en/api/rate-limits)
+- [OpenRouter Rate Limits](https://openrouter.ai/docs/api/reference/limits)
+
+### 3.5 並列リクエスト（高速化）
+
+順次処理では1リクエスト2-3秒かかる場合、1000サンプル×2回で約80分以上かかる。
+並列化により大幅な高速化が可能。
+
+#### 実装アプローチ
+
+```python
+import asyncio
+import httpx
+
+class AsyncOpenRouterClient:
+    def __init__(self, api_key: str, model: str, max_concurrent: int = 5):
+        self.api_key = api_key
+        self.model = model
+        self.semaphore = asyncio.Semaphore(max_concurrent)
+        self.client = httpx.AsyncClient(timeout=60.0)
+
+    async def complete(self, prompt: str) -> str:
+        async with self.semaphore:
+            response = await self.client.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers={"Authorization": f"Bearer {self.api_key}"},
+                json={
+                    "model": self.model,
+                    "messages": [{"role": "user", "content": prompt}]
+                }
+            )
+            if response.status_code == 429:
+                retry_after = int(response.headers.get("retry-after", 10))
+                await asyncio.sleep(retry_after)
+                return await self.complete(prompt)  # リトライ
+            response.raise_for_status()
+            return response.json()["choices"][0]["message"]["content"]
+
+async def batch_generate_async(
+    client: AsyncOpenRouterClient,
+    texts: list[str],
+    prompt_template: str
+) -> list[str]:
+    tasks = [
+        client.complete(prompt_template.format(text=t))
+        for t in texts
+    ]
+    return await asyncio.gather(*tasks)
+```
+
+#### 推奨設定
+
+| 並列度 | 用途 |
+|-------|------|
+| 5 | 控えめ（Tier 1向け） |
+| 10 | 中程度（Tier 2-3向け） |
+| 20+ | 高負荷（Tier 4+、要確認） |
+
+429エラーが頻発する場合は並列度を下げる。
+
 ## 4. 絵文字処理
 
 ### 4.1 絵文字リスト取得
