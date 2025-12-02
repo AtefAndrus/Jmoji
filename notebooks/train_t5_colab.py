@@ -269,12 +269,21 @@ training_args = TrainingArguments(
     save_total_limit=3,  # チェックポイント数を制限
 )
 
+# Data Collator（T5用）
+from transformers import DataCollatorForSeq2Seq
+data_collator = DataCollatorForSeq2Seq(
+    tokenizer=tokenizer,
+    model=model,
+    label_pad_token_id=-100,
+)
+
 # Trainer
 trainer = Trainer(
     model=model,
     args=training_args,
     train_dataset=train_dataset,
     eval_dataset=val_dataset,
+    data_collator=data_collator,
 )
 
 # GPU移動
