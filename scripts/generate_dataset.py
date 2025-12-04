@@ -21,6 +21,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# httpxのログを抑制（リクエストごとのログが邪魔なため）
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+
 
 def _get_nsfw_keywords(data_cfg: dict) -> Optional[Set[str]]:
     """設定からNSFWキーワードを取得"""

@@ -132,6 +132,21 @@ OPENROUTER_API_KEY=your_api_key_here
 
 `notebooks/train_t5.ipynb` でワンクリック学習が可能。READMEの「Open in Colab」バッジから起動できる。
 
+## 運用ルール
+
+### データセット生成時のシード管理
+
+学習に使用するデータセット（v4以降）は、バージョンごとに `random_seed` を変更する。
+
+| バージョン | seed | 備考 |
+|------------|------|------|
+| v1, v2, v3 | 42 | 初期開発・品質改善 |
+| v4以降 | 43, 44, ... | バージョンごとに変更 |
+
+**理由**: 同じseedでは同じ文が同じ順番で出てくるため、データセット間の独立性が低下する。
+
+詳細は [dataset_generation_v3.md](docs/details/dataset_generation_v3.md) を参照。
+
 ## 進捗管理
 
 `docs/status.md` でタスクの完了状況を管理している。
