@@ -33,7 +33,7 @@ if torch.cuda.is_available():
 
 # %%
 # パス設定
-DATA_PATH = "/content/drive/MyDrive/school/ai_application/dataset_v1.jsonl"
+DATA_PATH = "/content/drive/MyDrive/school/ai_application/dataset_v3.jsonl"
 OUTPUT_DIR = "/content/Jmoji/outputs/models"
 EVAL_DIR = "/content/Jmoji/outputs/evaluation"
 
@@ -241,7 +241,7 @@ print(f"  Non -100 labels: {(item['labels'] != -100).sum().item()}")
 # ## 6. 学習
 
 # %%
-from transformers import Trainer, TrainingArguments
+from transformers import Trainer, TrainingArguments, EarlyStoppingCallback
 import os
 
 # 出力ディレクトリ作成
@@ -277,6 +277,9 @@ data_collator = DataCollatorForSeq2Seq(
     label_pad_token_id=-100,
 )
 
+# Early Stopping（5エポック改善なしで停止）
+early_stopping = EarlyStoppingCallback(early_stopping_patience=5)
+
 # Trainer
 trainer = Trainer(
     model=model,
@@ -284,6 +287,7 @@ trainer = Trainer(
     train_dataset=train_dataset,
     eval_dataset=val_dataset,
     data_collator=data_collator,
+    callbacks=[early_stopping],
 )
 
 # GPU移動
@@ -454,14 +458,3 @@ with open(f"{EVAL_DIR}/test_metrics.json", "w", encoding="utf-8") as f:
         "exact_match_rate": eval_results["exact_match_rate"],
         "num_samples": eval_results["num_samples"],
     }, f, ensure_ascii=False, indent=2)
-
-# %% [markdown]
-# ## 9. モデルをDriveに保存（オプション）
-
-# %%
-# Google Driveにモデルを保存
-DRIVE_MODEL_PATH = "/content/drive/MyDrive/school/ai_application/jmoji_model"
-
-import shutil
-shutil.copytree(OUTPUT_DIR, DRIVE_MODEL_PATH, dirs_exist_ok=True)
-print(f"Model copied to {DRIVE_MODEL_PATH}")
