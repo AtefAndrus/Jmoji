@@ -50,6 +50,8 @@ sys.path.append("/content/Jmoji")
 
 ## 2. データパイプライン
 
+> **詳細ドキュメント**: データセット生成の品質改善については [dataset_generation_v3.md](details/dataset_generation_v3.md) を参照。
+
 ### 2.1 Wikipedia データ取得
 
 ```python
@@ -141,6 +143,49 @@ data:
       - "性行為"
       - "殺人"
       # ... 必要に応じて追加
+```
+
+### 2.5 文完全性フィルタ
+
+Wikipediaの文分割では、半端な文（メタ情報、途中で切れた文、閉じ括弧で始まる文など）が混入する。
+これらをClaudeに渡す前にフィルタリングすることで、API回答混入やSNS変換失敗を防ぐ。
+
+```python
+import re
+
+def is_complete_sentence(text: str) -> tuple[bool, str]:
+    """文として完全かどうかを判定"""
+    # メタセクション（Wikipediaの構造情報）
+    if re.match(r'^(関連項目|参考文献|外部リンク|脚注|出典|注釈)', text):
+        return False, "meta_section"
+    # 途中切れ（開き括弧で終わる）
+    if re.search(r'[（(「『][^）)」』]{0,30}$', text):
+        return False, "truncated"
+    # 閉じ括弧で始まる（前の文脈がない）
+    if re.match(r'^[」』）)]', text):
+        return False, "orphan_close"
+    # 句読点なし
+    if not re.search(r'[。！？!?」』)]$', text):
+        return False, "no_ending"
+    return True, ""
+```
+
+設定ファイルで有効/無効を切り替え可能:
+
+```yaml
+data:
+  complete_sentence_filter: true  # 半端な文を除外するか
+  buffer_ratio: 1.3               # 件数保証のためのバッファ率
+```
+
+### 2.6 フィルタログ
+
+フィルタで除外された文は `data/outputs/filtered_sentences.jsonl` に記録される:
+
+```json
+{"reason": "nsfw", "detail": "殺人", "text": "..."}
+{"reason": "incomplete", "detail": "meta_section", "text": "関連項目 ..."}
+{"reason": "incomplete", "detail": "truncated", "text": "『天才・たけしの..."}
 ```
 
 ## 3. 教師LLM（Claude）呼び出し
