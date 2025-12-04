@@ -53,6 +53,7 @@ CONFIG = {
     "fp16": False,  # NaN防止のためオフ
     "logging_steps": 50,
     "label_smoothing": 0.1,  # mode collapse対策
+    "early_stopping_patience": 5,
 }
 
 print("Config:")
@@ -66,26 +67,16 @@ for k, v in CONFIG.items():
 import sys
 sys.path.append("/content/Jmoji")
 
-import json
-import random
-from pathlib import Path
-
-def load_jsonl(path):
-    data = []
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            if line.strip():
-                data.append(json.loads(line))
-    return data
-
-def split_dataset(samples, train_ratio, val_ratio, seed=42):
-    data = list(samples)
-    random.seed(seed)
-    random.shuffle(data)
-    n = len(data)
-    train_end = int(n * train_ratio)
-    val_end = int(n * (train_ratio + val_ratio))
-    return data[:train_end], data[train_end:val_end], data[val_end:]
+from src.models.t5_trainer import (
+    EmojiDataset,
+    TrainConfig,
+    setup_model_with_emoji_tokens,
+    build_trainer,
+    split_dataset,
+    load_jsonl,
+    generate_emoji,
+    evaluate_model,
+)
 
 # データ読み込み
 samples = load_jsonl(DATA_PATH)
@@ -129,32 +120,14 @@ for emoji, count in emoji_counts.most_common(20):
 top_emoji, top_count = emoji_counts.most_common(1)[0]
 top_pct = top_count / len(all_emojis) * 100
 if top_pct > 15:
-    print(f"\n⚠️ Warning: '{top_emoji}' is {top_pct:.1f}% of all emojis. This may cause mode collapse.")
+    print(f"\nWarning: '{top_emoji}' is {top_pct:.1f}% of all emojis. This may cause mode collapse.")
 
 # %% [markdown]
 # ## 4. モデル・トークナイザ準備
 
 # %%
-from transformers import T5Tokenizer, T5ForConditionalGeneration
-from src.data.emoji_utils import get_all_emojis
-
-def setup_model_with_emoji_tokens(model_name):
-    """絵文字トークンを追加したモデルを準備"""
-    tokenizer = T5Tokenizer.from_pretrained(model_name, legacy=False)
-    model = T5ForConditionalGeneration.from_pretrained(model_name)
-
-    # 絵文字を特殊トークンとして追加
-    emoji_tokens = list(get_all_emojis())
-    num_added = tokenizer.add_tokens(emoji_tokens)
-    print(f"Added {num_added} emoji tokens")
-
-    # 埋め込み層をリサイズ
-    model.resize_token_embeddings(len(tokenizer))
-    print(f"Vocab size: {len(tokenizer)}")
-
-    return tokenizer, model
-
 tokenizer, model = setup_model_with_emoji_tokens(CONFIG["model_name"])
+print(f"Vocab size: {len(tokenizer)}")
 
 # 絵文字トークン化確認
 test_emoji = "😊 🎉"
@@ -166,48 +139,6 @@ print(f"Emoji tokenization test: '{test_emoji}' -> {ids} -> '{decoded}'")
 # ## 5. Dataset準備
 
 # %%
-from torch.utils.data import Dataset
-
-class EmojiDataset(Dataset):
-    def __init__(self, samples, tokenizer, max_input_length=128, max_output_length=32):
-        self.samples = list(samples)
-        self.tokenizer = tokenizer
-        self.max_input_length = max_input_length
-        self.max_output_length = max_output_length
-
-    def __len__(self):
-        return len(self.samples)
-
-    def __getitem__(self, idx):
-        sample = self.samples[idx]
-        input_text = sample["sns_text"]
-        output_text = sample["emoji_string"]
-
-        input_encoding = self.tokenizer(
-            input_text,
-            max_length=self.max_input_length,
-            padding="max_length",
-            truncation=True,
-            return_tensors="pt",
-        )
-        output_encoding = self.tokenizer(
-            output_text,
-            max_length=self.max_output_length,
-            padding="max_length",
-            truncation=True,
-            return_tensors="pt",
-        )
-
-        # パディングトークンを-100に置き換え（損失計算から除外）
-        labels = output_encoding["input_ids"].squeeze(0).clone()
-        labels[labels == self.tokenizer.pad_token_id] = -100
-
-        return {
-            "input_ids": input_encoding["input_ids"].squeeze(0),
-            "attention_mask": input_encoding["attention_mask"].squeeze(0),
-            "labels": labels,
-        }
-
 # Dataset作成
 train_dataset = EmojiDataset(
     train_samples, tokenizer,
@@ -241,53 +172,36 @@ print(f"  Non -100 labels: {(item['labels'] != -100).sum().item()}")
 # ## 6. 学習
 
 # %%
-from transformers import Trainer, TrainingArguments, EarlyStoppingCallback
 import os
 
 # 出力ディレクトリ作成
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(EVAL_DIR, exist_ok=True)
 
-# TrainingArguments
-training_args = TrainingArguments(
+# TrainConfigを構築
+train_config = TrainConfig(
+    model_name=CONFIG["model_name"],
     output_dir=OUTPUT_DIR,
     num_train_epochs=CONFIG["num_epochs"],
     per_device_train_batch_size=CONFIG["batch_size"],
     per_device_eval_batch_size=CONFIG["batch_size"],
     learning_rate=CONFIG["learning_rate"],
     weight_decay=CONFIG["weight_decay"],
-    eval_strategy="epoch",
-    save_strategy="epoch",
-    load_best_model_at_end=True,
-    metric_for_best_model="eval_loss",
-    greater_is_better=False,
-    logging_steps=CONFIG["logging_steps"],
     warmup_steps=CONFIG["warmup_steps"],
+    logging_steps=CONFIG["logging_steps"],
     fp16=CONFIG["fp16"],
-    label_smoothing_factor=CONFIG["label_smoothing"],  # mode collapse対策
-    report_to="none",  # wandbを無効化
-    save_total_limit=3,  # チェックポイント数を制限
+    label_smoothing_factor=CONFIG["label_smoothing"],
+    early_stopping_patience=CONFIG["early_stopping_patience"],
+    save_total_limit=3,
 )
 
-# Data Collator（T5用）
-from transformers import DataCollatorForSeq2Seq
-data_collator = DataCollatorForSeq2Seq(
+# Trainer構築
+trainer = build_trainer(
+    model=model,
     tokenizer=tokenizer,
-    model=model,
-    label_pad_token_id=-100,
-)
-
-# Early Stopping（5エポック改善なしで停止）
-early_stopping = EarlyStoppingCallback(early_stopping_patience=5)
-
-# Trainer
-trainer = Trainer(
-    model=model,
-    args=training_args,
     train_dataset=train_dataset,
     eval_dataset=val_dataset,
-    data_collator=data_collator,
-    callbacks=[early_stopping],
+    cfg=train_config,
 )
 
 # GPU移動
@@ -317,40 +231,6 @@ with open(f"{EVAL_DIR}/train_eval_results.txt", "w") as f:
 # ## 7. 推論テスト
 
 # %%
-def generate_emoji(model, tokenizer, text, max_length=32, use_sampling=True):
-    """テキストから絵文字を生成"""
-    model.eval()
-    inputs = tokenizer(
-        text,
-        return_tensors="pt",
-        max_length=128,
-        truncation=True
-    )
-    if torch.cuda.is_available():
-        inputs = {k: v.to("cuda") for k, v in inputs.items()}
-
-    with torch.no_grad():
-        if use_sampling:
-            # Temperature sampling（多様性重視）
-            outputs = model.generate(
-                **inputs,
-                max_length=max_length,
-                do_sample=True,
-                temperature=1.0,
-                top_k=50,
-                top_p=0.95,
-            )
-        else:
-            # Beam search（精度重視）
-            outputs = model.generate(
-                **inputs,
-                max_length=max_length,
-                num_beams=4,
-                early_stopping=True
-            )
-
-    return tokenizer.decode(outputs[0], skip_special_tokens=True)
-
 # 学習データでテスト（暗記確認）
 print("=== 学習データでのテスト（Sampling） ===")
 for sample in train_samples[:5]:
@@ -399,62 +279,29 @@ for text in test_texts:
 # ## 8. 評価指標
 
 # %%
-def jaccard_similarity(pred_set, gold_set):
-    """Jaccard類似度を計算"""
-    if not pred_set and not gold_set:
-        return 1.0
-    if not pred_set or not gold_set:
-        return 0.0
-    intersection = len(pred_set & gold_set)
-    union = len(pred_set | gold_set)
-    return intersection / union
-
-def evaluate_model(model, tokenizer, samples, max_samples=100):
-    """モデルを評価"""
-    results = []
-
-    for sample in samples[:max_samples]:
-        text = sample["sns_text"]
-        gold = sample["emoji_string"]
-        pred = generate_emoji(model, tokenizer, text)
-
-        # 絵文字をセットに変換
-        gold_set = set(gold.split())
-        pred_set = set(pred.split())
-
-        jaccard = jaccard_similarity(pred_set, gold_set)
-        exact_match = 1 if gold_set == pred_set else 0
-
-        results.append({
-            "jaccard": jaccard,
-            "exact_match": exact_match,
-            "pred": pred,
-            "gold": gold,
-        })
-
-    # 集計
-    avg_jaccard = sum(r["jaccard"] for r in results) / len(results)
-    exact_match_rate = sum(r["exact_match"] for r in results) / len(results)
-
-    return {
-        "avg_jaccard": avg_jaccard,
-        "exact_match_rate": exact_match_rate,
-        "num_samples": len(results),
-        "details": results,
-    }
-
-# テストセットで評価
+# テストセットで評価（全件）
 print("=== テストセット評価 ===")
 eval_results = evaluate_model(model, tokenizer, test_samples)
-print(f"Average Jaccard: {eval_results['avg_jaccard']:.4f}")
-print(f"Exact Match Rate: {eval_results['exact_match_rate']:.4f}")
-print(f"Samples evaluated: {eval_results['num_samples']}")
+print(f"Average Jaccard: {eval_results.avg_jaccard:.4f}")
+print(f"Exact Match Rate: {eval_results.exact_match_rate:.4f}")
+print(f"Micro F1: {eval_results.micro_f1:.4f}")
+print(f"Avg Precision: {eval_results.avg_precision:.4f}")
+print(f"Avg Recall: {eval_results.avg_recall:.4f}")
+print(f"Avg F1: {eval_results.avg_f1:.4f}")
+print(f"Samples evaluated: {eval_results.num_samples}")
 
+# %%
 # 結果保存
 import json
 with open(f"{EVAL_DIR}/test_metrics.json", "w", encoding="utf-8") as f:
     json.dump({
-        "avg_jaccard": eval_results["avg_jaccard"],
-        "exact_match_rate": eval_results["exact_match_rate"],
-        "num_samples": eval_results["num_samples"],
+        "avg_jaccard": eval_results.avg_jaccard,
+        "exact_match_rate": eval_results.exact_match_rate,
+        "micro_f1": eval_results.micro_f1,
+        "avg_precision": eval_results.avg_precision,
+        "avg_recall": eval_results.avg_recall,
+        "avg_f1": eval_results.avg_f1,
+        "num_samples": eval_results.num_samples,
     }, f, ensure_ascii=False, indent=2)
+
+print(f"Metrics saved to {EVAL_DIR}/test_metrics.json")
