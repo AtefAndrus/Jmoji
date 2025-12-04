@@ -227,9 +227,7 @@ class TestEvaluateModel:
                 {"sns_text": "勉強", "emoji_string": "📚 ✏️"},
             ]
 
-            result = evaluate_model(
-                mock_model, mock_tokenizer, samples, device="cpu"
-            )
+            result = evaluate_model(mock_model, mock_tokenizer, samples, device="cpu")
 
             assert result.num_samples == 2
             assert len(result.details) == 2
@@ -246,7 +244,9 @@ class TestEvaluateModel:
         with patch("src.models.t5_trainer.generate_emoji") as mock_gen:
             mock_gen.return_value = "😊"
 
-            samples = [{"sns_text": f"test{i}", "emoji_string": "😊"} for i in range(10)]
+            samples = [
+                {"sns_text": f"test{i}", "emoji_string": "😊"} for i in range(10)
+            ]
 
             result = evaluate_model(
                 mock_model, mock_tokenizer, samples, max_samples=3, device="cpu"
@@ -296,7 +296,10 @@ class TestBuildTrainer:
 
                     # callbacksがNoneまたは空で呼ばれる
                     call_kwargs = mock_trainer_cls.call_args[1]
-                    assert call_kwargs["callbacks"] is None or call_kwargs["callbacks"] == []
+                    assert (
+                        call_kwargs["callbacks"] is None
+                        or call_kwargs["callbacks"] == []
+                    )
 
     def test_build_trainer_with_early_stopping(self, mock_components, tmp_path):
         """EarlyStoppingありでTrainerを構築"""
@@ -311,7 +314,9 @@ class TestBuildTrainer:
         with patch("src.models.t5_trainer.Trainer") as mock_trainer_cls:
             with patch("src.models.t5_trainer.TrainingArguments"):
                 with patch("src.models.t5_trainer.DataCollatorForSeq2Seq"):
-                    with patch("src.models.t5_trainer.EarlyStoppingCallback") as mock_es:
+                    with patch(
+                        "src.models.t5_trainer.EarlyStoppingCallback"
+                    ) as mock_es:
                         build_trainer(model, tokenizer, train_ds, eval_ds, cfg)
 
                         # EarlyStoppingCallbackが作成される

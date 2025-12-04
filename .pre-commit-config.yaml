@@ -1,0 +1,42 @@
+repos:
+  # jupytext: .py -> .ipynb 変換
+  - repo: local
+    hooks:
+      - id: jupytext
+        name: jupytext
+        entry: uv run jupytext --to notebook --update
+        language: system
+        files: ^notebooks/.*\.py$
+        pass_filenames: true
+
+  # ruff: linter & formatter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.3
+    hooks:
+      - id: ruff
+        args: [--fix]
+        exclude: ^notebooks/
+      - id: ruff-format
+        exclude: ^notebooks/
+
+  # mypy: type checker
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-pyyaml
+        args: [--ignore-missing-imports]
+        files: ^(src|scripts)/
+
+  # general hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^notebooks/.*\.ipynb$
+      - id: end-of-file-fixer
+        exclude: ^notebooks/.*\.ipynb$
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [--maxkb=1000]

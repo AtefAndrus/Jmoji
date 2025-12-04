@@ -154,9 +154,9 @@ def build_trainer(
     # Callbacks
     callbacks = []
     if cfg.early_stopping_patience is not None:
-        callbacks.append(EarlyStoppingCallback(
-            early_stopping_patience=cfg.early_stopping_patience
-        ))
+        callbacks.append(
+            EarlyStoppingCallback(early_stopping_patience=cfg.early_stopping_patience)
+        )
 
     return Trainer(
         model=model,
@@ -309,7 +309,9 @@ def evaluate_model(
     for sample in eval_samples:
         text = sample["sns_text"]
         gold = sample["emoji_string"]
-        pred = generate_emoji(model, tokenizer, text, use_sampling=use_sampling, device=device)
+        pred = generate_emoji(
+            model, tokenizer, text, use_sampling=use_sampling, device=device
+        )
 
         gold_set = set(gold.split())
         pred_set = set(pred.split())
@@ -320,16 +322,18 @@ def evaluate_model(
         jacc = jaccard_similarity(pred_set, gold_set)
         metrics = set_based_metrics(pred_set, gold_set)
 
-        details.append({
-            "text": text,
-            "gold": gold,
-            "pred": pred,
-            "jaccard": jacc,
-            "precision": metrics["precision"],
-            "recall": metrics["recall"],
-            "f1": metrics["f1"],
-            "exact_match": gold_set == pred_set,
-        })
+        details.append(
+            {
+                "text": text,
+                "gold": gold,
+                "pred": pred,
+                "jaccard": jacc,
+                "precision": metrics["precision"],
+                "recall": metrics["recall"],
+                "f1": metrics["f1"],
+                "exact_match": gold_set == pred_set,
+            }
+        )
 
     # 集計
     n = len(details)

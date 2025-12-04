@@ -33,12 +33,26 @@ def main() -> None:
     if abs((train_ratio + val_ratio + test_ratio) - 1.0) > 1e-6:
         raise ValueError("train/val/test ratios must sum to 1.0")
 
-    train_samples, val_samples, test_samples = split_dataset(samples, train_ratio, val_ratio)
+    train_samples, val_samples, test_samples = split_dataset(
+        samples, train_ratio, val_ratio
+    )
 
-    tokenizer, model = setup_model_with_emoji_tokens(training_cfg.get("model_name", "sonoisa/t5-base-japanese"))
+    tokenizer, model = setup_model_with_emoji_tokens(
+        training_cfg.get("model_name", "sonoisa/t5-base-japanese")
+    )
 
-    train_ds = EmojiDataset(train_samples, tokenizer, training_cfg.get("max_input_length", 128), training_cfg.get("max_output_length", 32))
-    val_ds = EmojiDataset(val_samples, tokenizer, training_cfg.get("max_input_length", 128), training_cfg.get("max_output_length", 32))
+    train_ds = EmojiDataset(
+        train_samples,
+        tokenizer,
+        training_cfg.get("max_input_length", 128),
+        training_cfg.get("max_output_length", 32),
+    )
+    val_ds = EmojiDataset(
+        val_samples,
+        tokenizer,
+        training_cfg.get("max_input_length", 128),
+        training_cfg.get("max_output_length", 32),
+    )
 
     tcfg = TrainConfig(
         model_name=training_cfg.get("model_name", "sonoisa/t5-base-japanese"),
@@ -69,9 +83,13 @@ def main() -> None:
 
     # 簡易評価（検証データのloss）
     eval_result = trainer.evaluate()
-    output_eval_dir = Path(cfg.get("evaluation", {}).get("results_dir", "outputs/evaluation"))
+    output_eval_dir = Path(
+        cfg.get("evaluation", {}).get("results_dir", "outputs/evaluation")
+    )
     output_eval_dir.mkdir(parents=True, exist_ok=True)
-    (output_eval_dir / "train_eval_results.txt").write_text(str(eval_result), encoding="utf-8")
+    (output_eval_dir / "train_eval_results.txt").write_text(
+        str(eval_result), encoding="utf-8"
+    )
 
 
 if __name__ == "__main__":

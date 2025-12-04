@@ -158,9 +158,13 @@ def generate_dataset(
         if existing_count > 0:
             start_idx = existing_count
             samples = load_dataset(output_path)
-            logger.info(f"Resuming from index {start_idx} ({existing_count} samples found)")
+            logger.info(
+                f"Resuming from index {start_idx} ({existing_count} samples found)"
+            )
             if show_progress:
-                print(f"[Resume] {existing_count} samples found, continuing from index {start_idx}")
+                print(
+                    f"[Resume] {existing_count} samples found, continuing from index {start_idx}"
+                )
 
     # 新規開始の場合はファイルをクリア
     if start_idx == 0 and output_path.exists():
@@ -207,7 +211,9 @@ def generate_dataset(
                 emoji_string=" ".join(emojis),
             )
 
-            if validate_sample(sample, min_count=min_emoji_count, max_count=max_emoji_count):
+            if validate_sample(
+                sample, min_count=min_emoji_count, max_count=max_emoji_count
+            ):
                 samples.append(sample)
                 append_sample(sample, output_path)
                 stats.success += 1
@@ -228,8 +234,7 @@ def generate_dataset(
             if is_content_policy_error(e):
                 stats.content_rejections += 1
                 logger.warning(
-                    f"Content policy rejection at {global_idx}: "
-                    f"{sentence[:50]}..."
+                    f"Content policy rejection at {global_idx}: " f"{sentence[:50]}..."
                 )
             else:
                 stats.errors += 1
@@ -318,7 +323,9 @@ async def _process_single_async(
             emoji_string=" ".join(emojis),
         )
 
-        if validate_sample(sample, min_count=min_emoji_count, max_count=max_emoji_count):
+        if validate_sample(
+            sample, min_count=min_emoji_count, max_count=max_emoji_count
+        ):
             return (idx, sample, "success")
         else:
             return (idx, None, "skipped")
@@ -369,9 +376,13 @@ async def generate_dataset_async(
         if existing_count > 0:
             start_idx = existing_count
             samples = load_dataset(output_path)
-            logger.info(f"Resuming from index {start_idx} ({existing_count} samples found)")
+            logger.info(
+                f"Resuming from index {start_idx} ({existing_count} samples found)"
+            )
             if show_progress:
-                print(f"[Resume] {existing_count} samples found, continuing from index {start_idx}")
+                print(
+                    f"[Resume] {existing_count} samples found, continuing from index {start_idx}"
+                )
 
     # 新規開始の場合はファイルをクリア
     if start_idx == 0 and output_path.exists():
@@ -388,7 +399,9 @@ async def generate_dataset_async(
 
     # タスク作成
     tasks = [
-        _process_single_async(client, sentence, start_idx + idx, min_emoji_count, max_emoji_count)
+        _process_single_async(
+            client, sentence, start_idx + idx, min_emoji_count, max_emoji_count
+        )
         for idx, sentence in enumerate(sentences_to_process)
     ]
 

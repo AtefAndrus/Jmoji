@@ -17,8 +17,8 @@ drive.mount('/content/drive')
 %cd /content/Jmoji
 
 # %%
-# 依存関係インストール
-!pip install -r requirements-colab.txt
+# 依存関係インストール（pyproject.tomlから自動解決）
+!pip install -q .
 
 # %%
 # GPU確認

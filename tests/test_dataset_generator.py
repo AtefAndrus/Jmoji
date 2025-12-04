@@ -371,7 +371,9 @@ def test_is_content_policy_error_403():
     """403エラーはコンテンツポリシーエラーとして判定"""
     response = MagicMock()
     response.status_code = 403
-    error = httpx.HTTPStatusError("403 Forbidden", request=MagicMock(), response=response)
+    error = httpx.HTTPStatusError(
+        "403 Forbidden", request=MagicMock(), response=response
+    )
     assert is_content_policy_error(error) is True
 
 
@@ -380,7 +382,9 @@ def test_is_content_policy_error_moderation_keyword():
     response = MagicMock()
     response.status_code = 400
     response.text = '{"error": {"message": "Content moderation violation"}}'
-    error = httpx.HTTPStatusError("400 Bad Request", request=MagicMock(), response=response)
+    error = httpx.HTTPStatusError(
+        "400 Bad Request", request=MagicMock(), response=response
+    )
     assert is_content_policy_error(error) is True
 
 
@@ -389,7 +393,9 @@ def test_is_content_policy_error_flagged_keyword():
     response = MagicMock()
     response.status_code = 400
     response.text = '{"error": {"message": "Input was flagged"}}'
-    error = httpx.HTTPStatusError("400 Bad Request", request=MagicMock(), response=response)
+    error = httpx.HTTPStatusError(
+        "400 Bad Request", request=MagicMock(), response=response
+    )
     assert is_content_policy_error(error) is True
 
 
@@ -398,7 +404,9 @@ def test_is_content_policy_error_regular_error():
     response = MagicMock()
     response.status_code = 500
     response.text = '{"error": {"message": "Internal server error"}}'
-    error = httpx.HTTPStatusError("500 Server Error", request=MagicMock(), response=response)
+    error = httpx.HTTPStatusError(
+        "500 Server Error", request=MagicMock(), response=response
+    )
     assert is_content_policy_error(error) is False
 
 

@@ -12,7 +12,6 @@ import pytest
 
 from src.generation.openrouter_client import AsyncOpenRouterClient, OpenRouterClient
 
-
 # =============================================================================
 # OpenRouterClient（同期版）テスト
 # =============================================================================
@@ -226,9 +225,7 @@ async def test_async_client_semaphore_limits_concurrency():
 
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "choices": [{"message": {"content": "OK"}}]
-        }
+        mock_response.json.return_value = {"choices": [{"message": {"content": "OK"}}]}
         mock_response.raise_for_status = MagicMock()
         return mock_response
 

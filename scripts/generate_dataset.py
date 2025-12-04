@@ -38,12 +38,33 @@ def _get_nsfw_keywords(data_cfg: dict) -> Optional[Set[str]]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate emoji dataset from Wikipedia")
-    parser.add_argument("--config", default="configs/default.yaml", help="Config file path")
-    parser.add_argument("--async", dest="use_async", action="store_true", help="Use async mode")
-    parser.add_argument("--no-resume", dest="resume", action="store_false", help="Don't resume from existing file")
-    parser.add_argument("--no-nsfw-filter", dest="nsfw_filter", action="store_false", help="Disable NSFW filter")
-    parser.add_argument("--no-complete-filter", dest="complete_filter", action="store_false", help="Disable incomplete sentence filter")
+    parser = argparse.ArgumentParser(
+        description="Generate emoji dataset from Wikipedia"
+    )
+    parser.add_argument(
+        "--config", default="configs/default.yaml", help="Config file path"
+    )
+    parser.add_argument(
+        "--async", dest="use_async", action="store_true", help="Use async mode"
+    )
+    parser.add_argument(
+        "--no-resume",
+        dest="resume",
+        action="store_false",
+        help="Don't resume from existing file",
+    )
+    parser.add_argument(
+        "--no-nsfw-filter",
+        dest="nsfw_filter",
+        action="store_false",
+        help="Disable NSFW filter",
+    )
+    parser.add_argument(
+        "--no-complete-filter",
+        dest="complete_filter",
+        action="store_false",
+        help="Disable incomplete sentence filter",
+    )
     args = parser.parse_args()
 
     cfg = load_config(args.config)
@@ -60,12 +81,18 @@ def main() -> None:
     output_path = output_dir / output_file
 
     # フィルタログパス
-    filter_log_filename = data_cfg.get("filter_log_filename", "filtered_sentences.jsonl")
+    filter_log_filename = data_cfg.get(
+        "filter_log_filename", "filtered_sentences.jsonl"
+    )
     filter_log_path = output_dir / filter_log_filename
 
     # フィルタ設定
-    apply_nsfw = args.nsfw_filter and data_cfg.get("nsfw_filter", {}).get("enabled", True)
-    apply_complete = args.complete_filter and data_cfg.get("complete_sentence_filter", True)
+    apply_nsfw = args.nsfw_filter and data_cfg.get("nsfw_filter", {}).get(
+        "enabled", True
+    )
+    apply_complete = args.complete_filter and data_cfg.get(
+        "complete_sentence_filter", True
+    )
     nsfw_keywords = _get_nsfw_keywords(data_cfg) if apply_nsfw else set()
 
     # 目標サンプル数

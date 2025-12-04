@@ -12,7 +12,7 @@ Claude Haiku 4.5を教師モデルとして疑似対訳データセットを構�
 - Python 3.12
 - パッケージ管理: uv + mise
 - 主要ライブラリ: transformers, torch, datasets, emoji, httpx
-- 開発ツール: ruff, mypy, pytest
+- 開発ツール: ruff, mypy, pytest, pre-commit, jupytext
 
 ## ディレクトリ構成
 
@@ -78,6 +78,19 @@ uv run ruff check src/ scripts/ tests/    # リント
 uv run mypy src/ scripts/                 # 型チェック
 ```
 
+### pre-commit
+
+```bash
+uv run pre-commit install                 # フックをインストール（初回のみ）
+uv run pre-commit run --all-files         # 全ファイルに対して実行
+```
+
+commit時に以下が自動実行される:
+- jupytext: `notebooks/*.py` → `.ipynb` 変換
+- ruff: リント・フォーマット（notebooks/除外）
+- mypy: 型チェック（src/, scripts/）
+- trailing-whitespace, end-of-file-fixer等
+
 ## 設定ファイル
 
 `configs/default.yaml` に以下のセクションがある:
@@ -108,9 +121,12 @@ uv run mypy src/ scripts/                 # 型チェック
 
 ### T5学習（`t5_trainer.py`）
 
-- 絵文字トークン追加
-- EmojiDataset クラス
-- Trainer構築ユーティリティ
+- 絵文字トークン追加（`setup_model_with_emoji_tokens`）
+- `EmojiDataset` クラス
+- `TrainConfig` データクラス（学習設定）
+- `build_trainer` 関数（EarlyStoppingCallback対応）
+- `generate_emoji` 関数（推論）
+- `evaluate_model` 関数（評価指標計算）
 
 ## 環境変数
 
@@ -130,7 +146,9 @@ OPENROUTER_API_KEY=your_api_key_here
 
 ## Colab学習
 
-`notebooks/train_t5.ipynb` でワンクリック学習が可能。READMEの「Open in Colab」バッジから起動できる。
+`notebooks/train_t5_colab.ipynb` でワンクリック学習が可能。READMEの「Open in Colab」バッジから起動できる。
+
+ノートブックは `notebooks/train_t5_colab.py`（percent format）から jupytext で自動生成される。
 
 ## 運用ルール
 

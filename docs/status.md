@@ -9,8 +9,10 @@
 - [x] データセット生成ユーティリティ（検証・保存/読込・進捗表示・途中保存・並列対応・resume対応・API拒否ログ・件数保証）
 - [x] 評価指標（Jaccard, Precision/Recall/F1, Micro-F1, Exact Match, 長さ分布）
 - [x] T5用DatasetとTrainer生成ユーティリティ（絵文字トークン追加含む）
+- [x] T5推論・評価関数（`generate_emoji`, `evaluate_model`, `EvaluationResult`）
 - [x] Wikipediaデータローダー（事前フィルタ統合・フィルタログ出力）
 - [x] NSFWコンテンツフィルタ（キーワードブラックリストによる事前フィルタ + API拒否ログ）
+- [x] pre-commit設定（jupytext, ruff, mypy, trailing-whitespace等）
 - [ ] BERTベースライン実装
 - [ ] 設定ファイルのスキーマ/バリデーション（現状は単純なYAMLロードのみ）
 
@@ -56,6 +58,12 @@
 - [ ] ベースラインvs学生モデルの自動評価レポート
 - [ ] 人手評価フレームの整備と評価者リクルート
 - [ ] エラー分析テンプレートでの事例収集
+
+## ノートブック/Colab
+
+- [x] `notebooks/train_t5_colab.py`: Colab学習用ノートブック（src/からモジュールインポート）
+- [x] jupytextによる`.py`→`.ipynb`自動変換（pre-commit連携）
+- [x] `requirements-colab.txt`廃止、`pip install .`方式に移行
 
 ## 実験記録・技術ドキュメント
 

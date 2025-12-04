@@ -2,7 +2,7 @@
 
 知識蒸留を用いた日本語テキスト→絵文字翻訳モデル
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AtefAndrus/Jmoji/blob/main/notebooks/train_t5.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AtefAndrus/Jmoji/blob/main/notebooks/train_t5_colab.ipynb)
 
 ## 概要
 
@@ -103,7 +103,7 @@ uv run scripts/train.py --config configs/default.yaml
 
 **Google Colab（推奨）:**
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AtefAndrus/Jmoji/blob/main/notebooks/train_t5.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AtefAndrus/Jmoji/blob/main/notebooks/train_t5_colab.ipynb)
 
 上のバッジをクリックしてノートブックを開き、上から順に実行してください。A100 GPUを推奨します。
 
@@ -118,6 +118,10 @@ uv run ruff check src/ scripts/ tests/
 
 # 型チェック
 uv run mypy src/ scripts/
+
+# pre-commit（初回のみインストール）
+uv run pre-commit install
+uv run pre-commit run --all-files
 ```
 
 ## ドキュメント
