@@ -38,7 +38,14 @@ data:
 
   # 出力パス
   output_dir: "data/outputs"
-  output_filename: "dataset_v2.jsonl"
+  output_filename: "dataset_v3.jsonl"
+  filter_log_filename: "filtered_sentences.jsonl"  # フィルタで除外された文のログ
+
+  # 件数保証設定
+  buffer_ratio: 1.3  # 目標件数の1.3倍の文を取得（フィルタ除外分のバッファ）
+
+  # 文の完全性フィルタ
+  complete_sentence_filter: true  # 半端な文を除外するか
 
   # 進捗表示設定
   checkpoint_interval: 100  # 何件ごとにチェックポイントログを出すか

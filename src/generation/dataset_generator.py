@@ -13,6 +13,7 @@ from tqdm import tqdm
 from tqdm.asyncio import tqdm as atqdm
 
 from src.data.emoji_utils import extract_emojis, is_valid_emoji
+from src.data.text_preprocessor import remove_emojis
 from src.generation import prompts
 
 logger = logging.getLogger(__name__)
@@ -127,6 +128,7 @@ def generate_dataset(
     resume: bool = True,
     preview_interval: int = 50,
     show_progress: bool = True,
+    target_count: Optional[int] = None,
 ) -> List[DataSample]:
     """データセット生成（進捗表示・途中保存対応）
 
@@ -141,6 +143,7 @@ def generate_dataset(
         resume: 既存ファイルがあれば続きから再開するか
         preview_interval: 何件ごとにサンプルプレビューを表示するか
         show_progress: プログレスバーを表示するか
+        target_count: 目標サンプル数（Noneの場合は全文を処理）
 
     Returns:
         生成されたDataSampleのリスト
@@ -180,6 +183,9 @@ def generate_dataset(
             dynamic_ncols=True,
         )
 
+    # 件数保証: 既存サンプル数を考慮
+    existing_success = len(samples)
+
     for idx, sentence in enumerate(sentences_to_process):
         stats.total += 1
         global_idx = start_idx + idx
@@ -188,6 +194,8 @@ def generate_dataset(
             sns_text = client.complete(
                 prompts.SNS_CONVERSION_PROMPT.format(text=sentence)
             ).strip()
+            # SNS変換結果から絵文字を除去
+            sns_text = remove_emojis(sns_text).strip()
             emoji_output = client.complete(
                 prompts.EMOJI_GENERATION_PROMPT.format(text=sns_text)
             ).strip()
@@ -207,6 +215,11 @@ def generate_dataset(
                 # サンプルプレビュー
                 if show_progress and stats.success % preview_interval == 0:
                     _print_preview(sample, stats)
+
+                # 件数保証: 目標に達したら終了
+                if target_count and (existing_success + stats.success) >= target_count:
+                    logger.info(f"Target count {target_count} reached, stopping")
+                    break
             else:
                 stats.skipped += 1
                 logger.debug(f"Sample {global_idx} skipped (validation failed)")
@@ -292,6 +305,8 @@ async def _process_single_async(
         sns_text = (
             await client.complete(prompts.SNS_CONVERSION_PROMPT.format(text=sentence))
         ).strip()
+        # SNS変換結果から絵文字を除去
+        sns_text = remove_emojis(sns_text).strip()
         emoji_output = (
             await client.complete(prompts.EMOJI_GENERATION_PROMPT.format(text=sns_text))
         ).strip()
@@ -326,6 +341,7 @@ async def generate_dataset_async(
     preview_interval: int = 50,
     show_progress: bool = True,
     resume: bool = True,
+    target_count: Optional[int] = None,
 ) -> List[DataSample]:
     """非同期版データセット生成（並列リクエスト対応）
 
@@ -338,6 +354,7 @@ async def generate_dataset_async(
         preview_interval: 何件ごとにサンプルプレビューを表示するか
         show_progress: プログレスバーを表示するか
         resume: 既存ファイルがあれば続きから再開するか
+        target_count: 目標サンプル数（Noneの場合は全文を処理）
 
     Returns:
         生成されたDataSampleのリスト
@@ -421,6 +438,11 @@ async def generate_dataset_async(
             # サンプルプレビュー
             if show_progress and len(samples) % preview_interval == 0:
                 _print_preview(sample, stats)
+
+            # 件数保証: 目標に達したら保存を終了
+            if target_count and len(samples) >= target_count:
+                logger.info(f"Target count {target_count} reached, stopping")
+                break
 
     # 最終統計
     if show_progress:
