@@ -146,7 +146,7 @@ J(A, B) = |A ∩ B| / |A ∪ B|
 - [x] タスク仕様の確定
 - [x] 教師LLMプロンプトの設計・試行
 - [x] 小規模データセット（〜1,000ペア）構築
-- [ ] T5ベースラインの動作確認
+- [x] T5ベースラインの動作確認 → soft mode collapse発生、詳細は [実験記録v3](details/experiment_v3_5000samples.md)
 
 ### 年内
 
@@ -174,6 +174,9 @@ J(A, B) = |A ∩ B| / |A ∪ B|
 1. **教師LLM由来のバイアス**: 特定絵文字への偏り → ダウンサンプリングで対応
 2. **定量評価の難しさ**: 正解が一意でない → 複数指標 + 人手評価で対応
 3. **教師LLMのノイズ**: 無関係な絵文字の混入 → 目視確認 + フィルタリング
+4. **Mode Collapse**: 頻出絵文字への偏り → データ側（✨禁止）とモデル側（Focal Loss等）の両面対策が必要。詳細は実験記録を参照:
+   - [v1実験](details/experiment_v1_1000samples.md): 完全mode collapse（✨のみ出力）
+   - [v3実験](details/experiment_v3_5000samples.md): soft mode collapse（Top5絵文字に偏り）
 
 ## 参考文献
 

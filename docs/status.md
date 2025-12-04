@@ -1,4 +1,4 @@
-# 進捗チェックリスト（更新: 2025-12-05）
+# 進捗チェックリスト（更新: 2025-12-05 v3実験完了）
 
 ## 実装
 
@@ -54,7 +54,7 @@
 ## モデル/評価マイルストーン
 
 - [x] 小規模T5学習のスモーク（数エポック）→ mode collapse発生、詳細は [実験記録v1](details/experiment_v1_1000samples.md)
-- [ ] 中規模（5k）データでのT5学習
+- [x] 中規模（5k）データでのT5学習 → soft mode collapse発生、詳細は [実験記録v3](details/experiment_v3_5000samples.md)
 - [ ] ベースラインvs学生モデルの自動評価レポート
 - [ ] 人手評価フレームの整備と評価者リクルート
 - [ ] エラー分析テンプレートでの事例収集
@@ -68,4 +68,5 @@
 ## 実験記録・技術ドキュメント
 
 - [experiment_v1_1000samples.md](details/experiment_v1_1000samples.md): 1,000件データセットでの学習結果（mode collapse発生）
+- [experiment_v3_5000samples.md](details/experiment_v3_5000samples.md): 5,000件データセットでの学習結果（soft mode collapse発生）
 - [dataset_generation_v3.md](details/dataset_generation_v3.md): データセット生成v3の品質改善と件数保証
