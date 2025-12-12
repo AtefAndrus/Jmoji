@@ -1,10 +1,14 @@
 # 実験計画: v3データセットでの学習改善
 
+> **注**: 本計画に基づく実験は完了しました。結果は [experiment_v3_improvements.md](experiment_v3_improvements.md) を参照してください。
+
 ## 概要
 
 本ドキュメントは、v3データセット（5,000件）での学習結果（[experiment_v3_5000samples.md](experiment_v3_5000samples.md)）を受けて、Soft Mode Collapseを解消するための実験計画を記述する。
 
 **目標**: Top5絵文字への偏りを解消し、Jaccard > 0.10を達成する
+
+**結果**: 目標未達。最良はtop100でJaccard 0.058（+29%）、多様性19.8%。データ密度の向上が次の課題。
 
 ---
 
@@ -38,13 +42,13 @@
 
 ### 実験一覧
 
-| # | 実験名 | 変更点 | 実装難度 | 状態 |
+| # | 実験名 | 変更点 | Jaccard | 状態 |
 |---|--------|--------|---------|------|
-| 0 | v3_baseline | - | - | 完了 |
-| 1 | v3_lr1e-4 | learning_rate: 3e-4→1e-4 | 低 | 未実施 |
-| 2 | v3_top100 | 絵文字をTop-100に制限 | 中 | 未実施 |
-| 3 | v3_lr1e-4_top100 | 1+2の組み合わせ | 低 | 未実施 |
-| 4 | v3_focal | Focal Loss (γ=2) | 高 | 未実施 |
+| 0 | v3_baseline | - | 0.045 | 完了 |
+| 1 | v3_lr1e-4 | learning_rate: 3e-4→1e-4 | 0.048 | 完了 |
+| 2 | v3_top100 | 絵文字をTop-100に制限 | **0.058** | 完了（最良） |
+| 3 | v3_lr1e-4_top100 | 1+2の組み合わせ | 0.000 | 完了（失敗） |
+| 4 | v3_focal_top100 | Focal Loss + Top-100 | 0.058 | 完了 |
 
 ---
 
@@ -241,6 +245,7 @@ Exp1 (lr1e-4)
 
 ## 関連ドキュメント
 
+- [experiment_v3_improvements.md](experiment_v3_improvements.md): **本計画の実験結果**
 - [experiment_v3_5000samples.md](experiment_v3_5000samples.md): v3ベースラインの実験結果
 - [experiment_v1_1000samples.md](experiment_v1_1000samples.md): v1での実験（完全mode collapse）
 - [dataset_generation_v3.md](dataset_generation_v3.md): v3データセットの品質改善

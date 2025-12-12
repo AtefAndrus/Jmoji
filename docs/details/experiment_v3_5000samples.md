@@ -227,7 +227,8 @@ v1では✨のみに完全collapseしたが、v3では頻出Top5絵文字（🎵
 
 ## 関連ドキュメント
 
-- [experiment_plan_v3_improvements.md](experiment_plan_v3_improvements.md): 学習改善の実験計画（本実験の次ステップ）
+- [experiment_v3_improvements.md](experiment_v3_improvements.md): **学習改善実験の結果**（本実験の後続）
+- [experiment_plan_v3_improvements.md](experiment_plan_v3_improvements.md): 学習改善の実験計画
 - [experiment_v1_1000samples.md](experiment_v1_1000samples.md): v1での実験（mode collapse発生）
 - [dataset_generation_v3.md](dataset_generation_v3.md): v3データセットの品質改善
 - [研究概要](../research_overview.md): プロジェクト全体の概要
