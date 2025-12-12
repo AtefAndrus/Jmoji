@@ -86,6 +86,7 @@ uv run pre-commit run --all-files         # 全ファイルに対して実行
 ```
 
 commit時に以下が自動実行される:
+
 - jupytext: `notebooks/*.py` → `.ipynb` 変換
 - ruff: リント・フォーマット（notebooks/除外）
 - mypy: 型チェック（src/, scripts/）
@@ -164,6 +165,27 @@ OPENROUTER_API_KEY=your_api_key_here
 **理由**: 同じseedでは同じ文が同じ順番で出てくるため、データセット間の独立性が低下する。
 
 詳細は [dataset_generation_v3.md](docs/details/dataset_generation_v3.md) を参照。
+
+## ドキュメント
+
+`docs/` 以下に各種ドキュメントを配置している。
+
+### メインドキュメント
+
+| ファイル | 内容 |
+|----------|------|
+| [research_overview.md](docs/research_overview.md) | 研究概要。タスク定義、手法（データセット構築・モデル構成）、評価方法、スケジュール、先行研究との差異 |
+| [implemention_guide.md](docs/implemention_guide.md) | 実装ガイド。環境構築、データパイプライン、Claude API呼び出し、絵文字処理、T5ファインチューニング、トラブルシューティング |
+| [evaluation.md](docs/evaluation.md) | 評価方法の詳細。Jaccard類似度、Precision/Recall/F1、人手評価設計、エラー分析カテゴリ |
+| [status.md](docs/status.md) | 進捗チェックリスト。実装・スクリプト・テスト・データ運用・モデル評価の完了状況 |
+
+### 詳細ドキュメント（`docs/details/`）
+
+| ファイル | 内容 |
+|----------|------|
+| [experiment_v1_1000samples.md](docs/details/experiment_v1_1000samples.md) | 実験記録v1。1,000件データセットでの学習結果。✨への偏り（18.6%）によるmode collapse発生と対策検討 |
+| [experiment_v3_5000samples.md](docs/details/experiment_v3_5000samples.md) | 実験記録v3。5,000件データセットでの学習結果。soft mode collapse（Top5絵文字への偏り）発生と次ステップ |
+| [dataset_generation_v3.md](docs/details/dataset_generation_v3.md) | データセット生成v3の品質改善。事前フィルタ、SNS絵文字除去、件数保証の実装詳細 |
 
 ## 進捗管理
 
