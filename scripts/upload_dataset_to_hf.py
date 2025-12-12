@@ -22,7 +22,10 @@ import os
 from pathlib import Path
 
 from datasets import Dataset
+from dotenv import load_dotenv
 from huggingface_hub import HfApi, login
+
+load_dotenv()
 
 
 def load_jsonl_as_dataset(path: Path) -> Dataset:
