@@ -465,7 +465,7 @@ try:
 
     # git設定
     !git config user.name "AtefAndrus"
-    !git config user.email "77284388+AtefAndrus@users.noreply.github.com
+    !git config user.email "77284388+AtefAndrus@users.noreply.github.com"
 
     # 実験ログをコミット・プッシュ
     !git add outputs/experiments/{EXPERIMENT_NAME}/
@@ -476,3 +476,49 @@ try:
 except userdata.SecretNotFoundError:
     print("GITHUB_TOKEN not found in Colab Secrets. Skipping auto-commit.")
     print("To enable auto-commit, add GITHUB_TOKEN to Colab Secrets.")
+
+# %% [markdown]
+# ## 11. Hugging Face Hubにモデルをアップロード
+#
+# Colab Secretsに `HF_TOKEN` を設定しておく必要がある。
+# https://huggingface.co/settings/tokens → Create new token (Write権限)
+
+# %%
+from huggingface_hub import login, HfApi
+
+try:
+    HF_TOKEN = userdata.get('HF_TOKEN')
+    login(token=HF_TOKEN)
+
+    # リポジトリ名: jmoji-t5-{experiment_name}
+    repo_name = f"jmoji-t5-{EXPERIMENT_NAME}"
+    repo_id = f"AtefAndrus/{repo_name}"
+
+    print(f"Uploading model to Hugging Face Hub: {repo_id}")
+
+    # モデルとトークナイザをアップロード（privateリポジトリ）
+    model.push_to_hub(repo_id, private=True)
+    tokenizer.push_to_hub(repo_id, private=True)
+
+    # 実験設定もアップロード
+    api = HfApi()
+    api.upload_file(
+        path_or_fileobj=f"{EXP_DIR}/config.yaml",
+        path_in_repo="experiment_config.yaml",
+        repo_id=repo_id,
+        repo_type="model",
+    )
+    api.upload_file(
+        path_or_fileobj=f"{EXP_DIR}/eval_metrics.json",
+        path_in_repo="eval_metrics.json",
+        repo_id=repo_id,
+        repo_type="model",
+    )
+
+    print(f"\nModel uploaded to: https://huggingface.co/{repo_id}")
+
+except userdata.SecretNotFoundError:
+    print("HF_TOKEN not found in Colab Secrets. Skipping HF Hub upload.")
+    print("To enable upload, add HF_TOKEN (Write permission) to Colab Secrets.")
+except Exception as e:
+    print(f"Failed to upload to HF Hub: {e}")
