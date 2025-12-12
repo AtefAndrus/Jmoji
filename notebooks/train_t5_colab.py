@@ -30,25 +30,39 @@ if torch.cuda.is_available():
 
 # %% [markdown]
 # ## 2. 設定
+#
+# 実験タイプを変更することで、異なる設定で学習を実行できる。
+#
+# | 実験タイプ | 説明 |
+# |-----------|------|
+# | baseline | ベースライン（lr=3e-4） |
+# | lr1e-4 | 学習率調整（lr=1e-4） |
+# | top100 | Top-100絵文字制限 |
+# | lr1e-4_top100 | lr=1e-4 + Top-100制限 |
+# | focal | Focal Loss（γ=2.0） |
 
 # %%
 from datetime import datetime
 
-# 実験設定
-# 命名規則: {dataset_version}_{experiment_type}_{date}
-# 例: v3_baseline_20251205, v3_focal_loss_20251206, v4_lr1e-4_20251210
+# =============================================================================
+# 実験設定（ここを変更して実験を切り替える）
+# =============================================================================
 DATASET_VERSION = "v3"
-EXPERIMENT_TYPE = "baseline"  # baseline, focal_loss, lr1e-4, top100_emojis, etc.
+EXPERIMENT_TYPE = "lr1e-4"  # baseline, lr1e-4, top100, lr1e-4_top100, focal
+
+# =============================================================================
+# 実験タイプに応じた設定の自動調整
+# =============================================================================
 EXPERIMENT_DATE = datetime.now().strftime("%Y%m%d")
 EXPERIMENT_NAME = f"{DATASET_VERSION}_{EXPERIMENT_TYPE}_{EXPERIMENT_DATE}"
 
 # パス設定
-HF_DATASET_REPO = "AtefAndrus/jmoji-dataset"  # HuggingFace Hubのデータセット
+HF_DATASET_REPO = "AtefAndrus/jmoji-dataset"
 OUTPUT_DIR = "/content/Jmoji/outputs/models"
 EXP_DIR = f"/content/Jmoji/outputs/experiments/{EXPERIMENT_NAME}"
 DRIVE_EXP_DIR = f"/content/drive/MyDrive/school/ai_application/experiments/{EXPERIMENT_NAME}"
 
-# 学習設定
+# ベース設定
 CONFIG = {
     "experiment_name": EXPERIMENT_NAME,
     "dataset_version": DATASET_VERSION,
@@ -56,7 +70,7 @@ CONFIG = {
     "model_name": "sonoisa/t5-base-japanese",
     "num_epochs": 50,
     "batch_size": 16,
-    "learning_rate": 3e-4,
+    "learning_rate": 3e-4,  # デフォルト
     "weight_decay": 0.01,
     "warmup_steps": 150,
     "max_input_length": 128,
@@ -64,13 +78,31 @@ CONFIG = {
     "train_ratio": 0.8,
     "val_ratio": 0.1,
     "test_ratio": 0.1,
-    "fp16": False,  # NaN防止のためオフ
+    "fp16": False,
     "logging_steps": 50,
-    "label_smoothing": 0.1,  # mode collapse対策
+    "label_smoothing": 0.1,
     "early_stopping_patience": 5,
+    # 実験固有の設定
+    "use_focal_loss": False,
+    "focal_gamma": 2.0,
+    "use_top100_filter": False,
 }
 
-print(f"Experiment: {EXPERIMENT_NAME}")
+# 実験タイプに応じた設定の上書き
+if "lr1e-4" in EXPERIMENT_TYPE:
+    CONFIG["learning_rate"] = 1e-4
+    print("Setting: learning_rate = 1e-4")
+
+if "top100" in EXPERIMENT_TYPE:
+    CONFIG["use_top100_filter"] = True
+    print("Setting: Top-100 emoji filter enabled")
+
+if "focal" in EXPERIMENT_TYPE:
+    CONFIG["use_focal_loss"] = True
+    CONFIG["label_smoothing"] = 0.0  # Focal Lossと併用しない
+    print("Setting: Focal Loss enabled (gamma=2.0)")
+
+print(f"\nExperiment: {EXPERIMENT_NAME}")
 print(f"Dataset: {HF_DATASET_REPO} ({DATASET_VERSION})")
 print(f"Experiment dir: {EXP_DIR}")
 print("\nConfig:")
@@ -91,10 +123,18 @@ from src.models.t5_trainer import (
     TrainConfig,
     setup_model_with_emoji_tokens,
     build_trainer,
+    build_focal_loss_trainer,
+    ExperimentLoggingCallback,
     split_dataset,
     generate_emoji,
     evaluate_model,
 )
+from src.evaluation.metrics import (
+    diversity_ratio,
+    emoji_distribution,
+    compute_emoji_stats,
+)
+from src.data.emoji_utils import filter_samples_by_top_emojis
 
 # HuggingFace Hubからデータセットをロード
 hf_dataset = load_dataset(
@@ -122,28 +162,51 @@ for i, s in enumerate(train_samples[:3]):
 # ## 3.5 絵文字分布の確認
 
 # %%
-from collections import Counter
+# 絵文字統計を計算（src/evaluation/metrics.pyの関数を使用）
+emoji_counts, total_emoji_count, unique_emoji_count = compute_emoji_stats(samples)
 
-# 全サンプルの絵文字を集計
-all_emojis = []
-for sample in samples:
-    emojis = sample["emoji_string"].split()
-    all_emojis.extend(emojis)
-
-# 頻度カウント
-emoji_counts = Counter(all_emojis)
-print(f"Total emoji occurrences: {len(all_emojis)}")
-print(f"Unique emojis: {len(emoji_counts)}")
+print(f"Total emoji occurrences: {total_emoji_count}")
+print(f"Unique emojis: {unique_emoji_count}")
 print("\nTop 20 emojis:")
 for emoji, count in emoji_counts.most_common(20):
-    pct = count / len(all_emojis) * 100
+    pct = count / total_emoji_count * 100
     print(f"  {emoji}: {count} ({pct:.1f}%)")
 
 # 最頻出絵文字の割合を警告
 top_emoji, top_count = emoji_counts.most_common(1)[0]
-top_pct = top_count / len(all_emojis) * 100
+top_pct = top_count / total_emoji_count * 100
 if top_pct > 15:
     print(f"\nWarning: '{top_emoji}' is {top_pct:.1f}% of all emojis. This may cause mode collapse.")
+
+# Top-5絵文字を保存（評価時の多様性指標で使用）
+TOP_5_EMOJIS = set(e for e, _ in emoji_counts.most_common(5))
+print(f"\nTop 5 emojis (for diversity metric): {TOP_5_EMOJIS}")
+
+# %% [markdown]
+# ## 3.6 Top-100絵文字フィルタリング（オプション）
+#
+# `use_top100_filter=True` の場合、Top-100絵文字のみを含むサンプルに制限する。
+
+# %%
+if CONFIG["use_top100_filter"]:
+    # フィルタリング（src/data/emoji_utils.pyの関数を使用）
+    original_count = len(samples)
+    samples, emoji_counts, top_100_emojis = filter_samples_by_top_emojis(
+        samples, top_n=100
+    )
+    print(f"Top-100 emojis: {len(top_100_emojis)}")
+    print(f"Filtered samples: {len(samples)} / {original_count} ({len(samples)/original_count*100:.1f}%)")
+    print(f"Unique emojis after filter: {len(emoji_counts)}")
+
+    # 分割を再実行
+    train_samples, val_samples, test_samples = split_dataset(
+        samples,
+        CONFIG["train_ratio"],
+        CONFIG["val_ratio"]
+    )
+    print(f"Train: {len(train_samples)}, Val: {len(val_samples)}, Test: {len(test_samples)}")
+else:
+    print("Top-100 filter: DISABLED")
 
 # %% [markdown]
 # ## 4. モデル・トークナイザ準備
@@ -196,9 +259,7 @@ print(f"  Non -100 labels: {(item['labels'] != -100).sum().item()}")
 
 # %%
 import os
-import csv
 import yaml
-from transformers import TrainerCallback
 
 # 出力ディレクトリ作成
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -209,7 +270,7 @@ os.makedirs(DRIVE_EXP_DIR, exist_ok=True)
 config_with_metadata = {
     **CONFIG,
     "timestamp": datetime.now().isoformat(),
-    "data_path": DATA_PATH,
+    "data_source": f"{HF_DATASET_REPO}/data/{DATASET_VERSION}.jsonl",
     "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU",
     "total_samples": len(samples),
     "train_samples": len(train_samples),
@@ -221,35 +282,7 @@ with open(f"{EXP_DIR}/config.yaml", "w", encoding="utf-8") as f:
     yaml.dump(config_with_metadata, f, allow_unicode=True, default_flow_style=False)
 print(f"Config saved to {EXP_DIR}/config.yaml")
 
-
-# 学習ログを記録するCallback
-class ExperimentLoggingCallback(TrainerCallback):
-    def __init__(self, log_path: str):
-        self.log_path = log_path
-        self.logs = []
-
-    def on_log(self, args, state, control, logs=None, **kwargs):
-        if logs:
-            log_entry = {
-                "step": state.global_step,
-                "epoch": round(state.epoch, 2) if state.epoch else 0,
-            }
-            for key in ["loss", "eval_loss", "learning_rate"]:
-                if key in logs:
-                    log_entry[key] = logs[key]
-            if len(log_entry) > 2:  # step, epoch以外のデータがある場合のみ
-                self.logs.append(log_entry)
-
-    def on_train_end(self, args, state, control, **kwargs):
-        if self.logs:
-            fieldnames = list(self.logs[0].keys())
-            with open(self.log_path, "w", newline="", encoding="utf-8") as f:
-                writer = csv.DictWriter(f, fieldnames=fieldnames)
-                writer.writeheader()
-                writer.writerows(self.logs)
-            print(f"Training log saved to {self.log_path}")
-
-
+# 学習ログを記録するCallback（src/models/t5_trainer.pyから使用）
 logging_callback = ExperimentLoggingCallback(f"{EXP_DIR}/train_log.csv")
 
 # TrainConfigを構築
@@ -269,14 +302,26 @@ train_config = TrainConfig(
     save_total_limit=3,
 )
 
-# Trainer構築
-trainer = build_trainer(
-    model=model,
-    tokenizer=tokenizer,
-    train_dataset=train_dataset,
-    eval_dataset=val_dataset,
-    cfg=train_config,
-)
+# Trainer構築（Focal Lossの有無で切り替え）
+if CONFIG["use_focal_loss"]:
+    print(f"Using FocalLossTrainer (gamma={CONFIG['focal_gamma']})")
+    trainer = build_focal_loss_trainer(
+        model=model,
+        tokenizer=tokenizer,
+        train_dataset=train_dataset,
+        eval_dataset=val_dataset,
+        cfg=train_config,
+        gamma=CONFIG["focal_gamma"],
+    )
+else:
+    print("Using standard Trainer")
+    trainer = build_trainer(
+        model=model,
+        tokenizer=tokenizer,
+        train_dataset=train_dataset,
+        eval_dataset=val_dataset,
+        cfg=train_config,
+    )
 # カスタムCallbackを追加
 trainer.add_callback(logging_callback)
 
@@ -368,6 +413,20 @@ print(f"Avg Recall: {eval_results.avg_recall:.4f}")
 print(f"Avg F1: {eval_results.avg_f1:.4f}")
 print(f"Samples evaluated: {eval_results.num_samples}")
 
+# 多様性指標（Top-5絵文字以外の出力割合）
+predictions = [d["pred"] for d in eval_results.details]
+diversity = diversity_ratio(predictions, TOP_5_EMOJIS)
+print(f"\n=== 多様性指標 ===")
+print(f"Non-Top5 Ratio: {diversity['non_top_n_ratio']:.4f}")
+print(f"Unique Emojis in Output: {diversity['unique_emojis']}")
+print(f"Top5 Count: {diversity['top_n_count']}, Non-Top5 Count: {diversity['non_top_n_count']}")
+
+# 出力絵文字の分布（Top 10）
+pred_dist = emoji_distribution(predictions)
+print(f"\n=== 出力絵文字の分布（Top 10） ===")
+for i, (emoji, count) in enumerate(list(pred_dist.items())[:10]):
+    print(f"  {emoji}: {count}")
+
 # %%
 # 結果保存
 import json
@@ -381,6 +440,11 @@ eval_metrics = {
     "avg_recall": eval_results.avg_recall,
     "avg_f1": eval_results.avg_f1,
     "num_samples": eval_results.num_samples,
+    # 多様性指標
+    "diversity_non_top5_ratio": diversity["non_top_n_ratio"],
+    "diversity_unique_emojis": diversity["unique_emojis"],
+    "diversity_top5_count": diversity["top_n_count"],
+    "diversity_non_top5_count": diversity["non_top_n_count"],
 }
 
 with open(f"{EXP_DIR}/eval_metrics.json", "w", encoding="utf-8") as f:
@@ -432,6 +496,14 @@ summary_md = f"""# Experiment: {EXPERIMENT_NAME}
 | Avg Precision | {eval_results.avg_precision:.4f} |
 | Avg Recall | {eval_results.avg_recall:.4f} |
 | Avg F1 | {eval_results.avg_f1:.4f} |
+
+## Diversity Metrics
+| Metric | Value |
+|--------|-------|
+| Non-Top5 Ratio | {diversity['non_top_n_ratio']:.4f} |
+| Unique Emojis in Output | {diversity['unique_emojis']} |
+| Top5 Count | {diversity['top_n_count']} |
+| Non-Top5 Count | {diversity['non_top_n_count']} |
 
 ## Training Info
 - Best Checkpoint: {train_result.best_model_checkpoint}

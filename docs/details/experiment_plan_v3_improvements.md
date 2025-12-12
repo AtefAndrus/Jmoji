@@ -225,10 +225,10 @@ Exp1 (lr1e-4)
 
 | タスク | 対象ファイル | 優先度 | 状態 |
 |--------|-------------|--------|------|
-| Exp1用CONFIG変更 | notebooks/train_t5_colab.py | 高 | 未実施 |
-| Top-100フィルタリングセル追加 | notebooks/train_t5_colab.py | 高 | 未実施 |
-| FocalLossTrainer実装 | src/models/t5_trainer.py | 中 | 未実施 |
-| 多様性指標の追加 | src/evaluation/metrics.py | 中 | 未実施 |
+| Exp1用CONFIG変更 | notebooks/train_t5_colab.py | 高 | 完了 |
+| Top-100フィルタリングセル追加 | notebooks/train_t5_colab.py | 高 | 完了 |
+| FocalLossTrainer実装 | src/models/t5_trainer.py | 中 | 完了 |
+| 多様性指標の追加 | src/evaluation/metrics.py | 中 | 完了 |
 
 ---
 

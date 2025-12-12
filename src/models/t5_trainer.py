@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import torch
+import torch.nn.functional as F
+from torch import nn
 from torch.utils.data import Dataset
 from transformers import (
     DataCollatorForSeq2Seq,
@@ -14,6 +16,9 @@ from transformers import (
     T5ForConditionalGeneration,
     T5Tokenizer,
     Trainer,
+    TrainerCallback,
+    TrainerControl,
+    TrainerState,
     TrainingArguments,
 )
 
@@ -166,6 +171,184 @@ def build_trainer(
         data_collator=data_collator,
         callbacks=callbacks if callbacks else None,
     )
+
+
+class FocalLossTrainer(Trainer):
+    """Focal Lossを使用するカスタムTrainer。
+
+    クラス不均衡問題に対処するため、簡単な例（高確率で正解）の損失を下げ、
+    難しい例に集中して学習する。
+
+    Reference: Lin et al., "Focal Loss for Dense Object Detection", ICCV 2017
+    """
+
+    def __init__(self, gamma: float = 2.0, alpha: float = 1.0, **kwargs: Any) -> None:
+        """FocalLossTrainerを初期化する。
+
+        Args:
+            gamma: Focusing parameter。大きいほど簡単な例の損失が小さくなる。
+                   0.0でクロスエントロピーと同等。推奨値: 2.0
+            alpha: Class weight。1.0で均等。
+            **kwargs: Trainerの引数
+        """
+        super().__init__(**kwargs)
+        self.gamma = gamma
+        self.alpha = alpha
+
+    def compute_loss(
+        self,
+        model: nn.Module,
+        inputs: Dict[str, torch.Tensor | Any],
+        return_outputs: bool = False,
+        num_items_in_batch: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor | Tuple[torch.Tensor, Any]:
+        """Focal Lossを計算する。
+
+        Args:
+            model: T5モデル
+            inputs: 入力辞書（input_ids, attention_mask, labels）
+            return_outputs: Trueの場合、(loss, outputs)を返す
+            num_items_in_batch: バッチ内のアイテム数（未使用）
+
+        Returns:
+            損失テンソル、またはreturn_outputs=Trueの場合は(loss, outputs)
+        """
+        labels = inputs.pop("labels")
+        outputs = model(**inputs)
+        logits = outputs.logits
+
+        # Flatten
+        vocab_size = logits.size(-1)
+        logits_flat = logits.view(-1, vocab_size)
+        labels_flat = labels.view(-1)
+
+        # クロスエントロピー（reduction='none'で各要素の損失を取得）
+        ce_loss = F.cross_entropy(
+            logits_flat,
+            labels_flat,
+            reduction="none",
+            ignore_index=-100,
+        )
+
+        # Focal Loss: FL(p_t) = -α * (1 - p_t)^γ * log(p_t)
+        # p_t = exp(-ce_loss) は正解クラスの確率
+        pt = torch.exp(-ce_loss)
+        focal_loss = self.alpha * ((1 - pt) ** self.gamma) * ce_loss
+
+        # ignore_index=-100の要素を除いて平均
+        mask = labels_flat != -100
+        loss = focal_loss[mask].mean() if mask.any() else focal_loss.mean()
+
+        return (loss, outputs) if return_outputs else loss
+
+
+def build_focal_loss_trainer(
+    model: T5ForConditionalGeneration,
+    tokenizer: T5Tokenizer,
+    train_dataset: Dataset,
+    eval_dataset: Dataset,
+    cfg: TrainConfig,
+    gamma: float = 2.0,
+    alpha: float = 1.0,
+) -> FocalLossTrainer:
+    """TrainConfigからFocalLossTrainerを構築する。"""
+    args = TrainingArguments(
+        output_dir=cfg.output_dir,
+        num_train_epochs=cfg.num_train_epochs,
+        per_device_train_batch_size=cfg.per_device_train_batch_size,
+        per_device_eval_batch_size=cfg.per_device_eval_batch_size,
+        learning_rate=cfg.learning_rate,
+        weight_decay=cfg.weight_decay,
+        eval_strategy=cfg.eval_strategy,
+        save_strategy=cfg.save_strategy,
+        load_best_model_at_end=cfg.load_best_model_at_end,
+        metric_for_best_model=cfg.metric_for_best_model,
+        greater_is_better=cfg.greater_is_better,
+        logging_steps=cfg.logging_steps,
+        warmup_steps=cfg.warmup_steps,
+        fp16=cfg.fp16,
+        label_smoothing_factor=cfg.label_smoothing_factor,
+        save_total_limit=cfg.save_total_limit,
+        report_to=cfg.report_to,
+    )
+
+    data_collator = DataCollatorForSeq2Seq(
+        tokenizer=tokenizer,
+        model=model,
+        label_pad_token_id=-100,
+    )
+
+    callbacks = []
+    if cfg.early_stopping_patience is not None:
+        callbacks.append(
+            EarlyStoppingCallback(early_stopping_patience=cfg.early_stopping_patience)
+        )
+
+    return FocalLossTrainer(
+        gamma=gamma,
+        alpha=alpha,
+        model=model,
+        args=args,
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
+        data_collator=data_collator,
+        callbacks=callbacks if callbacks else None,
+    )
+
+
+class ExperimentLoggingCallback(TrainerCallback):
+    """学習ログをCSVファイルに記録するCallback。
+
+    学習中のloss, eval_loss, learning_rateをステップごとに記録し、
+    学習終了時にCSVファイルとして保存する。
+    """
+
+    def __init__(self, log_path: str) -> None:
+        """ExperimentLoggingCallbackを初期化する。
+
+        Args:
+            log_path: ログを保存するCSVファイルのパス
+        """
+        self.log_path = log_path
+        self.logs: List[Dict[str, Any]] = []
+
+    def on_log(
+        self,
+        args: TrainingArguments,
+        state: TrainerState,
+        control: TrainerControl,
+        logs: Optional[Dict[str, float]] = None,
+        **kwargs: Any,
+    ) -> None:
+        """ログイベント時に呼ばれる。"""
+        if logs:
+            log_entry: Dict[str, Any] = {
+                "step": state.global_step,
+                "epoch": round(state.epoch, 2) if state.epoch else 0,
+            }
+            for key in ["loss", "eval_loss", "learning_rate"]:
+                if key in logs:
+                    log_entry[key] = logs[key]
+            # step, epoch以外のデータがある場合のみ記録
+            if len(log_entry) > 2:
+                self.logs.append(log_entry)
+
+    def on_train_end(
+        self,
+        args: TrainingArguments,
+        state: TrainerState,
+        control: TrainerControl,
+        **kwargs: Any,
+    ) -> None:
+        """学習終了時に呼ばれる。ログをCSVに保存する。"""
+        if self.logs:
+            import csv
+
+            fieldnames = list(self.logs[0].keys())
+            with open(self.log_path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(self.logs)
 
 
 def split_dataset(
@@ -361,6 +544,9 @@ __all__ = [
     "TrainConfig",
     "setup_model_with_emoji_tokens",
     "build_trainer",
+    "FocalLossTrainer",
+    "build_focal_loss_trainer",
+    "ExperimentLoggingCallback",
     "split_dataset",
     "load_jsonl",
     "generate_emoji",

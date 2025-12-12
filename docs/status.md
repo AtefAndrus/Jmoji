@@ -13,6 +13,8 @@
 - [x] Wikipediaデータローダー（事前フィルタ統合・フィルタログ出力）
 - [x] NSFWコンテンツフィルタ（キーワードブラックリストによる事前フィルタ + API拒否ログ）
 - [x] pre-commit設定（jupytext, ruff, mypy, trailing-whitespace等）
+- [x] FocalLossTrainer実装（`src/models/t5_trainer.py`）
+- [x] 多様性指標（`diversity_ratio`, `emoji_distribution`）実装（`src/evaluation/metrics.py`）
 - [ ] BERTベースライン実装
 - [ ] 設定ファイルのスキーマ/バリデーション（現状は単純なYAMLロードのみ）
 
@@ -75,6 +77,10 @@
 - [x] GitHubへの自動コミット（`GITHUB_TOKEN` 設定時）
 - [x] HuggingFace Hubへのモデルアップロード（`HF_TOKEN` 設定時）
 - [x] HuggingFace Hubからのデータセットロード（`datasets.load_dataset()`）
+- [x] 実験切り替え機能（`EXPERIMENT_TYPE`で設定自動調整）
+- [x] Top-100絵文字フィルタリング（`use_top100_filter`オプション）
+- [x] Focal Loss対応（`use_focal_loss`オプション）
+- [x] 多様性指標の評価・保存
 
 ## 実験記録・技術ドキュメント
 
