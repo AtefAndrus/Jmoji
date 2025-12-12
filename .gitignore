@@ -218,4 +218,6 @@ data/raw/
 # Model outputs (large files)
 outputs/models/
 outputs/logs/
-outputs/evaluation/
+
+# Experiment logs (tracked in git)
+# outputs/experiments/ is NOT ignored - experiment configs and results are versioned

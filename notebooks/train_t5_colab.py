@@ -32,13 +32,27 @@ if torch.cuda.is_available():
 # ## 2. 設定
 
 # %%
+from datetime import datetime
+
+# 実験設定
+# 命名規則: {dataset_version}_{experiment_type}_{date}
+# 例: v3_baseline_20251205, v3_focal_loss_20251206, v4_lr1e-4_20251210
+DATASET_VERSION = "v3"
+EXPERIMENT_TYPE = "baseline"  # baseline, focal_loss, lr1e-4, top100_emojis, etc.
+EXPERIMENT_DATE = datetime.now().strftime("%Y%m%d")
+EXPERIMENT_NAME = f"{DATASET_VERSION}_{EXPERIMENT_TYPE}_{EXPERIMENT_DATE}"
+
 # パス設定
-DATA_PATH = "/content/drive/MyDrive/school/ai_application/dataset_v3.jsonl"
+DATA_PATH = f"/content/drive/MyDrive/school/ai_application/dataset_{DATASET_VERSION}.jsonl"
 OUTPUT_DIR = "/content/Jmoji/outputs/models"
-EVAL_DIR = "/content/Jmoji/outputs/evaluation"
+EXP_DIR = f"/content/Jmoji/outputs/experiments/{EXPERIMENT_NAME}"
+DRIVE_EXP_DIR = f"/content/drive/MyDrive/school/ai_application/experiments/{EXPERIMENT_NAME}"
 
 # 学習設定
 CONFIG = {
+    "experiment_name": EXPERIMENT_NAME,
+    "dataset_version": DATASET_VERSION,
+    "experiment_type": EXPERIMENT_TYPE,
     "model_name": "sonoisa/t5-base-japanese",
     "num_epochs": 50,
     "batch_size": 16,
@@ -56,7 +70,10 @@ CONFIG = {
     "early_stopping_patience": 5,
 }
 
-print("Config:")
+print(f"Experiment: {EXPERIMENT_NAME}")
+print(f"Data path: {DATA_PATH}")
+print(f"Experiment dir: {EXP_DIR}")
+print("\nConfig:")
 for k, v in CONFIG.items():
     print(f"  {k}: {v}")
 
@@ -173,10 +190,61 @@ print(f"  Non -100 labels: {(item['labels'] != -100).sum().item()}")
 
 # %%
 import os
+import csv
+import yaml
+from transformers import TrainerCallback
 
 # 出力ディレクトリ作成
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-os.makedirs(EVAL_DIR, exist_ok=True)
+os.makedirs(EXP_DIR, exist_ok=True)
+os.makedirs(DRIVE_EXP_DIR, exist_ok=True)
+
+# 設定をYAMLで保存
+config_with_metadata = {
+    **CONFIG,
+    "timestamp": datetime.now().isoformat(),
+    "data_path": DATA_PATH,
+    "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU",
+    "total_samples": len(samples),
+    "train_samples": len(train_samples),
+    "val_samples": len(val_samples),
+    "test_samples": len(test_samples),
+    "unique_emojis": len(emoji_counts),
+}
+with open(f"{EXP_DIR}/config.yaml", "w", encoding="utf-8") as f:
+    yaml.dump(config_with_metadata, f, allow_unicode=True, default_flow_style=False)
+print(f"Config saved to {EXP_DIR}/config.yaml")
+
+
+# 学習ログを記録するCallback
+class ExperimentLoggingCallback(TrainerCallback):
+    def __init__(self, log_path: str):
+        self.log_path = log_path
+        self.logs = []
+
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        if logs:
+            log_entry = {
+                "step": state.global_step,
+                "epoch": round(state.epoch, 2) if state.epoch else 0,
+            }
+            for key in ["loss", "eval_loss", "learning_rate"]:
+                if key in logs:
+                    log_entry[key] = logs[key]
+            if len(log_entry) > 2:  # step, epoch以外のデータがある場合のみ
+                self.logs.append(log_entry)
+
+    def on_train_end(self, args, state, control, **kwargs):
+        if self.logs:
+            fieldnames = list(self.logs[0].keys())
+            with open(self.log_path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(self.logs)
+            print(f"Training log saved to {self.log_path}")
+
+
+logging_callback = ExperimentLoggingCallback(f"{EXP_DIR}/train_log.csv")
 
 # TrainConfigを構築
 train_config = TrainConfig(
@@ -203,6 +271,8 @@ trainer = build_trainer(
     eval_dataset=val_dataset,
     cfg=train_config,
 )
+# カスタムCallbackを追加
+trainer.add_callback(logging_callback)
 
 # GPU移動
 if torch.cuda.is_available():
@@ -220,12 +290,14 @@ trainer.save_model(OUTPUT_DIR)
 tokenizer.save_pretrained(OUTPUT_DIR)
 print(f"Model saved to {OUTPUT_DIR}")
 
+# 学習結果を取得
+train_result = trainer.state
+best_epoch = train_result.best_metric if hasattr(train_result, 'best_metric') else None
+print(f"Best model checkpoint: {train_result.best_model_checkpoint}")
+
 # 評価結果保存
 eval_result = trainer.evaluate()
 print(f"\nEval results: {eval_result}")
-
-with open(f"{EVAL_DIR}/train_eval_results.txt", "w") as f:
-    f.write(str(eval_result))
 
 # %% [markdown]
 # ## 7. 推論テスト
@@ -293,15 +365,114 @@ print(f"Samples evaluated: {eval_results.num_samples}")
 # %%
 # 結果保存
 import json
-with open(f"{EVAL_DIR}/test_metrics.json", "w", encoding="utf-8") as f:
-    json.dump({
-        "avg_jaccard": eval_results.avg_jaccard,
-        "exact_match_rate": eval_results.exact_match_rate,
-        "micro_f1": eval_results.micro_f1,
-        "avg_precision": eval_results.avg_precision,
-        "avg_recall": eval_results.avg_recall,
-        "avg_f1": eval_results.avg_f1,
-        "num_samples": eval_results.num_samples,
-    }, f, ensure_ascii=False, indent=2)
+import shutil
 
-print(f"Metrics saved to {EVAL_DIR}/test_metrics.json")
+eval_metrics = {
+    "avg_jaccard": eval_results.avg_jaccard,
+    "exact_match_rate": eval_results.exact_match_rate,
+    "micro_f1": eval_results.micro_f1,
+    "avg_precision": eval_results.avg_precision,
+    "avg_recall": eval_results.avg_recall,
+    "avg_f1": eval_results.avg_f1,
+    "num_samples": eval_results.num_samples,
+}
+
+with open(f"{EXP_DIR}/eval_metrics.json", "w", encoding="utf-8") as f:
+    json.dump(eval_metrics, f, ensure_ascii=False, indent=2)
+print(f"Metrics saved to {EXP_DIR}/eval_metrics.json")
+
+# 予測サンプルを保存（最初の20件）
+with open(f"{EXP_DIR}/predictions_sample.jsonl", "w", encoding="utf-8") as f:
+    for detail in eval_results.details[:20]:
+        f.write(json.dumps(detail, ensure_ascii=False) + "\n")
+print(f"Prediction samples saved to {EXP_DIR}/predictions_sample.jsonl")
+
+# %% [markdown]
+# ## 9. 実験サマリー生成
+
+# %%
+# サマリーMarkdown生成
+summary_md = f"""# Experiment: {EXPERIMENT_NAME}
+
+## Overview
+- **Dataset**: {DATASET_VERSION} ({len(samples)} samples)
+- **Experiment Type**: {EXPERIMENT_TYPE}
+- **Date**: {EXPERIMENT_DATE}
+- **GPU**: {config_with_metadata.get('gpu_name', 'Unknown')}
+
+## Configuration
+| Parameter | Value |
+|-----------|-------|
+| Model | {CONFIG['model_name']} |
+| Epochs | {CONFIG['num_epochs']} |
+| Batch Size | {CONFIG['batch_size']} |
+| Learning Rate | {CONFIG['learning_rate']} |
+| Label Smoothing | {CONFIG['label_smoothing']} |
+| Early Stopping | {CONFIG['early_stopping_patience']} epochs |
+| FP16 | {CONFIG['fp16']} |
+
+## Data Split
+- Train: {len(train_samples)}
+- Validation: {len(val_samples)}
+- Test: {len(test_samples)}
+- Unique Emojis: {len(emoji_counts)}
+
+## Results
+| Metric | Value |
+|--------|-------|
+| Average Jaccard | {eval_results.avg_jaccard:.4f} |
+| Exact Match Rate | {eval_results.exact_match_rate:.4f} |
+| Micro F1 | {eval_results.micro_f1:.4f} |
+| Avg Precision | {eval_results.avg_precision:.4f} |
+| Avg Recall | {eval_results.avg_recall:.4f} |
+| Avg F1 | {eval_results.avg_f1:.4f} |
+
+## Training Info
+- Best Checkpoint: {train_result.best_model_checkpoint}
+- Final Eval Loss: {eval_result.get('eval_loss', 'N/A')}
+
+## Notes
+<!-- 実験に関するメモをここに記載 -->
+
+"""
+
+with open(f"{EXP_DIR}/summary.md", "w", encoding="utf-8") as f:
+    f.write(summary_md)
+print(f"Summary saved to {EXP_DIR}/summary.md")
+
+# %%
+# Google Driveにコピー
+shutil.copytree(EXP_DIR, DRIVE_EXP_DIR, dirs_exist_ok=True)
+print(f"\nExperiment files copied to Google Drive: {DRIVE_EXP_DIR}")
+print("\nFiles saved:")
+for fname in os.listdir(EXP_DIR):
+    print(f"  - {fname}")
+
+# %% [markdown]
+# ## 10. GitHubに実験ログをコミット
+#
+# Colab Secretsに `GITHUB_TOKEN` を設定しておく必要がある。
+# GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens
+# - Repository access: AtefAndrus/Jmoji のみ
+# - Permissions: Contents (Read and write)
+
+# %%
+from google.colab import userdata
+
+try:
+    GITHUB_TOKEN = userdata.get('GITHUB_TOKEN')
+    REPO_URL = f"https://{GITHUB_TOKEN}@github.com/AtefAndrus/Jmoji.git"
+
+    # git設定
+    !git config user.name "AtefAndrus"
+    !git config user.email "AtefAndrus@users.noreply.github.com"
+
+    # 実験ログをコミット・プッシュ
+    !git add outputs/experiments/{EXPERIMENT_NAME}/
+    !git commit -m "[experiment] {EXPERIMENT_NAME}"
+    !git push {REPO_URL} main
+
+    print(f"\nExperiment {EXPERIMENT_NAME} pushed to GitHub")
+except userdata.SecretNotFoundError:
+    print("GITHUB_TOKEN not found in Colab Secrets. Skipping auto-commit.")
+    print("To enable auto-commit, add GITHUB_TOKEN to Colab Secrets.")

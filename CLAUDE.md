@@ -28,6 +28,15 @@ Jmoji/
 │   └── status.md              # 進捗チェックリスト
 ├── notebooks/        # Jupyter notebooks
 ├── outputs/          # 学習済みモデル・ログ・評価結果
+│   ├── experiments/  # 実験ログ（Git管理対象）
+│   │   └── {version}_{type}_{date}/  # 例: v3_baseline_20251205
+│   │       ├── config.yaml           # 実験設定
+│   │       ├── train_log.csv         # 学習ログ
+│   │       ├── eval_metrics.json     # 評価結果
+│   │       ├── predictions_sample.jsonl  # 予測サンプル
+│   │       └── summary.md            # 実験サマリー
+│   ├── models/       # モデルチェックポイント（.gitignore）
+│   └── logs/         # 一時ログ（.gitignore）
 ├── scripts/          # CLIスクリプト
 │   ├── generate_dataset.py    # データセット生成
 │   └── train.py               # モデル学習
@@ -165,6 +174,41 @@ OPENROUTER_API_KEY=your_api_key_here
 **理由**: 同じseedでは同じ文が同じ順番で出てくるため、データセット間の独立性が低下する。
 
 詳細は [dataset_generation_v3.md](docs/details/dataset_generation_v3.md) を参照。
+
+### 実験ログ管理
+
+Colab学習の結果は `outputs/experiments/` に保存し、Gitで管理する。
+
+#### 命名規則
+
+```text
+{dataset_version}_{experiment_type}_{date}
+```
+
+| 要素 | 説明 | 例 |
+|------|------|-----|
+| dataset_version | データセットバージョン | v3, v4 |
+| experiment_type | 実験の種類 | baseline, focal_loss, lr1e-4, top100_emojis |
+| date | 実験日（YYYYMMDD） | 20251205 |
+
+例: `v3_baseline_20251205`, `v3_focal_loss_20251206`, `v4_lr1e-4_20251210`
+
+#### 保存ファイル
+
+| ファイル | 内容 | 形式 |
+|----------|------|------|
+| config.yaml | 実験設定（ハイパラ、データ分割等） | YAML |
+| train_log.csv | エポックごとのloss推移 | CSV |
+| eval_metrics.json | テストセット評価結果 | JSON |
+| predictions_sample.jsonl | 予測サンプル（20件） | JSONL |
+| summary.md | 実験サマリー（人間/AI可読） | Markdown |
+
+#### ワークフロー
+
+1. Colabで学習実行（ノートブック末尾で自動保存）
+2. Google Driveに自動コピー
+3. ローカルでDriveから `outputs/experiments/` にコピー
+4. `git add outputs/experiments/{experiment_name}/` でコミット
 
 ## ドキュメント
 
