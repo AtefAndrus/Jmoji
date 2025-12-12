@@ -344,7 +344,12 @@ class ExperimentLoggingCallback(TrainerCallback):
         if self.logs:
             import csv
 
-            fieldnames = list(self.logs[0].keys())
+            # 全ログエントリのキーを集約（eval_lossなど後から追加されるキーに対応）
+            all_keys: set[str] = set()
+            for log in self.logs:
+                all_keys.update(log.keys())
+            fieldnames = sorted(all_keys)
+
             with open(self.log_path, "w", newline="", encoding="utf-8") as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 writer.writeheader()
