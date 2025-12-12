@@ -1,4 +1,4 @@
-# 進捗チェックリスト（更新: 2025-12-05 v3実験完了）
+# 進捗チェックリスト（更新: 2025-12-12 HF Hub対応）
 
 ## 実装
 
@@ -35,6 +35,7 @@
   - [x] JSONLロード→ train/val/test 分割（`training.train_ratio/val_ratio/test_ratio`）
   - [x] 絵文字トークン追加済みモデルのロードとTrainer構築（early stopping, logging）
   - [x] 評価結果を `outputs/evaluation` に保存
+- [x] `scripts/upload_dataset_to_hf.py`: データセットをHuggingFace Hubにアップロード
 
 ## テスト
 
@@ -49,6 +50,7 @@
 - [x] 小規模（〜1k）疑似対訳の生成と共有
 - [x] 中規模（5k）疑似対訳の生成（✨禁止プロンプト適用）→ dataset_v2.jsonl
 - [x] 中規模（5k）品質改善版の生成（事前フィルタ・件数保証適用）→ dataset_v3.jsonl、詳細は [dataset_generation_v3.md](details/dataset_generation_v3.md)
+- [x] データセットのHuggingFace Hub移行（`AtefAndrus/jmoji-dataset`）
 - [ ] 大規模データ生成ジョブの運用手順化（レート制限・エラーリトライ）
 
 ## モデル/評価マイルストーン
@@ -64,6 +66,10 @@
 - [x] `notebooks/train_t5_colab.py`: Colab学習用ノートブック（src/からモジュールインポート）
 - [x] jupytextによる`.py`→`.ipynb`自動変換（pre-commit連携）
 - [x] `requirements-colab.txt`廃止、`pip install .`方式に移行
+- [x] 実験ログの自動保存（`outputs/experiments/{name}/` に config.yaml, train_log.csv, eval_metrics.json, summary.md）
+- [x] GitHubへの自動コミット（`GITHUB_TOKEN` 設定時）
+- [x] HuggingFace Hubへのモデルアップロード（`HF_TOKEN` 設定時）
+- [x] HuggingFace Hubからのデータセットロード（`datasets.load_dataset()`）
 
 ## 実験記録・技術ドキュメント
 

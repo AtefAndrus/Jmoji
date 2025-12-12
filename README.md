@@ -107,6 +107,17 @@ uv run scripts/train.py --config configs/default.yaml
 
 上のバッジをクリックしてノートブックを開き、上から順に実行してください。A100 GPUを推奨します。
 
+**Colab Secretsの設定（オプション）:**
+
+自動コミット・モデルアップロードを有効にする場合、Colabの左サイドバー「鍵」アイコンから以下を設定:
+
+| Secret名 | 用途 | 取得方法 |
+|----------|------|----------|
+| `GITHUB_TOKEN` | 実験ログの自動コミット | GitHub → Settings → Developer settings → Fine-grained tokens (Contents: Read and write) |
+| `HF_TOKEN` | モデルのHF Hubアップロード | huggingface.co/settings/tokens (Write権限) |
+
+未設定の場合はスキップされます（エラーにはなりません）。
+
 ### 開発コマンド
 
 ```bash
@@ -122,6 +133,26 @@ uv run mypy src/ scripts/
 # pre-commit（初回のみインストール）
 uv run pre-commit install
 uv run pre-commit run --all-files
+```
+
+## データセット
+
+データセットはHuggingFace Hubで管理しています: [AtefAndrus/jmoji-dataset](https://huggingface.co/datasets/AtefAndrus/jmoji-dataset)
+
+```python
+from datasets import load_dataset
+
+# 最新バージョン（v3）をロード
+dataset = load_dataset("AtefAndrus/jmoji-dataset", data_files="data/v3.jsonl", split="train")
+```
+
+### データセットのアップロード
+
+新しいバージョンをアップロードする場合:
+
+```bash
+export HF_TOKEN="hf_..."
+uv run scripts/upload_dataset_to_hf.py --versions v4
 ```
 
 ## ドキュメント

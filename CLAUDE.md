@@ -207,8 +207,34 @@ Colab学習の結果は `outputs/experiments/` に保存し、Gitで管理する
 
 1. Colabで学習実行（ノートブック末尾で自動保存）
 2. Google Driveに自動コピー
-3. ローカルでDriveから `outputs/experiments/` にコピー
-4. `git add outputs/experiments/{experiment_name}/` でコミット
+3. GitHubに自動プッシュ（`GITHUB_TOKEN` 設定時）
+4. モデルをHugging Face Hubにアップロード（`HF_TOKEN` 設定時）
+
+### データセット管理
+
+データセットはHugging Face Hubで管理: `AtefAndrus/jmoji-dataset`
+
+#### データセットのアップロード
+
+```bash
+# 環境変数でHFトークンを設定
+export HF_TOKEN="hf_..."
+
+# 全バージョンをアップロード
+uv run scripts/upload_dataset_to_hf.py
+
+# 特定バージョンのみ
+uv run scripts/upload_dataset_to_hf.py --versions v3 v4
+```
+
+#### データセットの使用
+
+```python
+from datasets import load_dataset
+
+# 最新バージョン（v3）をロード
+dataset = load_dataset("AtefAndrus/jmoji-dataset", data_files="data/v3.jsonl", split="train")
+```
 
 ## ドキュメント
 

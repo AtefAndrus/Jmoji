@@ -43,7 +43,7 @@ EXPERIMENT_DATE = datetime.now().strftime("%Y%m%d")
 EXPERIMENT_NAME = f"{DATASET_VERSION}_{EXPERIMENT_TYPE}_{EXPERIMENT_DATE}"
 
 # パス設定
-DATA_PATH = f"/content/drive/MyDrive/school/ai_application/dataset_{DATASET_VERSION}.jsonl"
+HF_DATASET_REPO = "AtefAndrus/jmoji-dataset"  # HuggingFace Hubのデータセット
 OUTPUT_DIR = "/content/Jmoji/outputs/models"
 EXP_DIR = f"/content/Jmoji/outputs/experiments/{EXPERIMENT_NAME}"
 DRIVE_EXP_DIR = f"/content/drive/MyDrive/school/ai_application/experiments/{EXPERIMENT_NAME}"
@@ -71,7 +71,7 @@ CONFIG = {
 }
 
 print(f"Experiment: {EXPERIMENT_NAME}")
-print(f"Data path: {DATA_PATH}")
+print(f"Dataset: {HF_DATASET_REPO} ({DATASET_VERSION})")
 print(f"Experiment dir: {EXP_DIR}")
 print("\nConfig:")
 for k, v in CONFIG.items():
@@ -84,19 +84,25 @@ for k, v in CONFIG.items():
 import sys
 sys.path.append("/content/Jmoji")
 
+from datasets import load_dataset
+
 from src.models.t5_trainer import (
     EmojiDataset,
     TrainConfig,
     setup_model_with_emoji_tokens,
     build_trainer,
     split_dataset,
-    load_jsonl,
     generate_emoji,
     evaluate_model,
 )
 
-# データ読み込み
-samples = load_jsonl(DATA_PATH)
+# HuggingFace Hubからデータセットをロード
+hf_dataset = load_dataset(
+    HF_DATASET_REPO,
+    data_files=f"data/{DATASET_VERSION}.jsonl",
+    split="train",
+)
+samples = list(hf_dataset)
 print(f"Total samples: {len(samples)}")
 
 # 分割
