@@ -1,0 +1,13 @@
+{
+  "avg_jaccard": 0.04808571428571429,
+  "exact_match_rate": 0.0,
+  "micro_f1": 0.08051529790660227,
+  "avg_precision": 0.08533333333333333,
+  "avg_recall": 0.07003333333333334,
+  "avg_f1": 0.07532857142857143,
+  "num_samples": 500,
+  "diversity_non_top5_ratio": 0.10874357090374724,
+  "diversity_unique_emojis": 17,
+  "diversity_top5_count": 1213,
+  "diversity_non_top5_count": 148
+}

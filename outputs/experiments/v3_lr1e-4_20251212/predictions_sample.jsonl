@@ -1,0 +1,20 @@
+{"text": "主な勝ち鞍は1995年のラジオたんぱ賞だね！", "gold": "🏇 🏆 🎙️", "pred": "🎵 🏇", "jaccard": 0.25, "precision": 0.5, "recall": 0.3333333333333333, "f1": 0.4, "exact_match": false}
+{"text": "江戸時代に入る頃だと思われるんだけど、この尾張氏が野盗に襲われちゃって、関係してた神社も奪われちゃったらしいんだよね。", "gold": "🏯 ⛩️ 😢", "pred": "😅 ⚽ 🏆", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "これらの傾向から見ると、臭素ってフッ素や塩素よりも離脱基として優れてるってことになるんだよね。", "gold": "🧪 🔬", "pred": "🎵 🎵", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "展望室には11脚のソファーを置いて、この場所は完全に洋風でまとめたんだよね。", "gold": "🛋️ 🏢 🌍", "pred": "🎵 🏆 🎵", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "そしてこのシーズンを最後にセルティックを去って、ミルウォーキー・ホークスに移籍したんだよね。", "gold": "🏀 🦅", "pred": "🏆 🏆", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "岡山県神社庁に入ってないんだって", "gold": "⛩️ 😮", "pred": "📚 🎵", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "3月に管理馬をデビューさせて、20日後にはのべ3頭目の管理馬が初勝利ゲット", "gold": "🐴 🏇 🎉 🥳", "pred": "📚 🏇 📚", "jaccard": 0.2, "precision": 0.5, "recall": 0.25, "f1": 0.3333333333333333, "exact_match": false}
+{"text": "その年だけで数千人の流民が石勒に降ってきたから、石勒めっちゃ喜んじゃって、張賓の手柄を褒めて1千戸も足してさ、前将軍に昇進させちゃったんだよね〜", "gold": "😄 🎖️ 📈", "pred": "🎵 🎵 📚", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "だからそういうことなんだよ。", "gold": "😊 👍", "pred": "📚", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "1986年オフにドラフト外で日本ハムに入団して、1991年に引退したんだよね〜", "gold": "⚾ 🗓️", "pred": "🎵 🎤", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "パレルモ 2009年8月6日に移籍金200万ユーロ・年俸55万ユーロでセリエAのUSチッタ・ディ・パレルモに移籍 ステアウアで昔お世話になったワルテル・ゼンガ監督と再会できた", "gold": "⚽ 🇮🇹 😊", "pred": "📚 🎵 🎵", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "SonicStage 2.1から使われてて、SonicStage 3.2以降は暗号化されてないデータも保存されるようになったんだよね。", "gold": "💾 🔐", "pred": "🏆 🎉", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "「そっすね」って答えて、それからは快く注文に応じてくれたって小嶋が言ってた。", "gold": "😄 👍", "pred": "🎵 🎤", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "その後、シカゴ・ブルズ、ニューオリンズ・ジャズ、カンザスシティ・キングスとかでプレーして、1975年に現役引退したんだよね。", "gold": "🏀 🇺🇸", "pred": "📚 🎵", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "綾が事故死しちゃった別の世界の一哉と電話で連絡取りながら、2人で自分たちの命奪った真犯人に迫っていくんだよね。", "gold": "📞 😢 🔍", "pred": "🏆 🎵 📚", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "1981年6月に本社を大阪府吹田市に移したんだよね。", "gold": "🏢 📍 🏭", "pred": "🎵 🤔 🎵", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "日下力さんの『いくさ物語の世界』（岩波新書、2008年）ってやつ", "gold": "📚", "pred": "🎵 😅 🎤", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "2010-11シーズンはミランの中盤が怪我人ばっかで大変だったから、アンカー（守備的ミッドフィルダー）やることもあったんだよね。", "gold": "⚽ 🏥 😅", "pred": "🎵 🏆 🎵", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "落ち着いてる時期は、コロナが赤道付近にいて、コロナホールが極地を覆ってるんだよね。", "gold": "🌍 ☀️", "pred": "🎉 🎵", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "1985年に厩舎をオープンしたよ！", "gold": "🐴 🎉 🏇", "pred": "📚 📚 🎵", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
