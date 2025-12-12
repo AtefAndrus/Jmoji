@@ -465,7 +465,7 @@ try:
 
     # git設定
     !git config user.name "AtefAndrus"
-    !git config user.email "AtefAndrus@users.noreply.github.com"
+    !git config user.email "77284388+AtefAndrus@users.noreply.github.com
 
     # 実験ログをコミット・プッシュ
     !git add outputs/experiments/{EXPERIMENT_NAME}/
