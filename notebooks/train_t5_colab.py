@@ -40,6 +40,7 @@ if torch.cuda.is_available():
 # | top100 | Top-100絵文字制限 |
 # | lr1e-4_top100 | lr=1e-4 + Top-100制限 |
 # | focal | Focal Loss（γ=2.0） |
+# | focal_top100 | Focal Loss + Top-100制限 |
 
 # %%
 from datetime import datetime
