@@ -255,6 +255,7 @@ dataset = load_dataset("AtefAndrus/jmoji-dataset", data_files="data/v3.jsonl", s
 |----------|------|
 | [experiment_v1_1000samples.md](docs/details/experiment_v1_1000samples.md) | 実験記録v1。1,000件データセットでの学習結果。✨への偏り（18.6%）によるmode collapse発生と対策検討 |
 | [experiment_v3_5000samples.md](docs/details/experiment_v3_5000samples.md) | 実験記録v3。5,000件データセットでの学習結果。soft mode collapse（Top5絵文字への偏り）発生と次ステップ |
+| [experiment_plan_v3_improvements.md](docs/details/experiment_plan_v3_improvements.md) | 学習改善の実験計画。学習率調整、Top-100絵文字制限、Focal Lossの4実験を計画 |
 | [dataset_generation_v3.md](docs/details/dataset_generation_v3.md) | データセット生成v3の品質改善。事前フィルタ、SNS絵文字除去、件数保証の実装詳細 |
 
 ## 進捗管理

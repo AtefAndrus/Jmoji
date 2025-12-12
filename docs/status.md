@@ -1,4 +1,4 @@
-# 進捗チェックリスト（更新: 2025-12-12 HF Hub対応）
+# 進捗チェックリスト（更新: 2025-12-12 学習改善実験計画追加）
 
 ## 実装
 
@@ -57,6 +57,11 @@
 
 - [x] 小規模T5学習のスモーク（数エポック）→ mode collapse発生、詳細は [実験記録v1](details/experiment_v1_1000samples.md)
 - [x] 中規模（5k）データでのT5学習 → soft mode collapse発生、詳細は [実験記録v3](details/experiment_v3_5000samples.md)
+- [ ] **学習改善実験** → 計画策定済み、詳細は [実験計画](details/experiment_plan_v3_improvements.md)
+  - [ ] Exp1: 学習率調整 (v3_lr1e-4)
+  - [ ] Exp2: Top-100絵文字制限 (v3_top100)
+  - [ ] Exp3: 組み合わせ (v3_lr1e-4_top100)
+  - [ ] Exp4: Focal Loss (v3_focal)
 - [ ] ベースラインvs学生モデルの自動評価レポート
 - [ ] 人手評価フレームの整備と評価者リクルート
 - [ ] エラー分析テンプレートでの事例収集
@@ -75,4 +80,5 @@
 
 - [experiment_v1_1000samples.md](details/experiment_v1_1000samples.md): 1,000件データセットでの学習結果（mode collapse発生）
 - [experiment_v3_5000samples.md](details/experiment_v3_5000samples.md): 5,000件データセットでの学習結果（soft mode collapse発生）
+- [experiment_plan_v3_improvements.md](details/experiment_plan_v3_improvements.md): 学習改善の実験計画（lr調整、Top-100制限、Focal Loss）
 - [dataset_generation_v3.md](details/dataset_generation_v3.md): データセット生成v3の品質改善と件数保証
