@@ -1,0 +1,20 @@
+{"text": "オリコン最高87位だった！", "gold": "🎵 📈 😊", "pred": "🤔 🎉 📚", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "これに諸将はみんな「羊祜が陸抗に手紙送ってさ、互いに通じ合ったみたいに、対等に彼と接するべきじゃん」って口を揃えた。", "gold": "📜 🤝", "pred": "🎵 🏆", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "今この願いを聞き入れて、任を授けて講和することにしたんだって。それで諸州郡に檄文を飛ばして、石勒に手を出すなって命じたらしい。", "gold": "📜 🏛️ 📋", "pred": "⚽ 🎵 📚", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "ジライヤ(挿入歌/筒井巧が歌ってる) 空からひびく声(挿入歌/串田晃が歌ってる) 機動刑事ジバン(1989年) 吠えろジバン!", "gold": "🎵 🎬 📺 🎤", "pred": "📚 ⚔️", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "319年10月、張賓が100人以上の将軍たちと一緒に石勒に「皇帝になろうぜ！」って勧めたんだって。", "gold": "👑 📜 🎭", "pred": "⚽ 🎵 🎵", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "境内の本殿は、海会寺金堂の跡地に建てられてるんだよね。", "gold": "⛩️ 🏛️", "pred": "📚 🏛️", "jaccard": 0.3333333333333333, "precision": 0.5, "recall": 0.5, "f1": 0.5, "exact_match": false}
+{"text": "1977年(昭和52年)10月に子ども彫金組合で大蔵大臣賞と日本銀行総裁賞をもらった！", "gold": "🏆 🎉 👏", "pred": "🎵 🏆", "jaccard": 0.25, "precision": 0.5, "recall": 0.3333333333333333, "f1": 0.4, "exact_match": false}
+{"text": "1970年(昭和45年)8月、旧来迎寺中学校の敷地に新しい校舎が完成して、各校からみんな移ってきたんだよね〜", "gold": "🏫 📚 🎓", "pred": "🏆 🏆 🏆", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "父の教育のせいで、チェコ系とユダヤ系の人たちのことをめっちゃ嫌うようになったんだって。", "gold": "😔 💔", "pred": "📚 🎵", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "多分、明公本人だってこれ良くは思ってないと思うよ。", "gold": "😅", "pred": "📚", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "2008年6月4日に発売されたんだよね〜！", "gold": "📅 🎮", "pred": "😅 🎵 🎵", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "2015年2月25日に6thアルバム『The Vanishing Bride』がリリースされた！", "gold": "🎵 🎉 📅", "pred": "🎉 😢 📚", "jaccard": 0.2, "precision": 0.3333333333333333, "recall": 0.3333333333333333, "f1": 0.3333333333333333, "exact_match": false}
+{"text": "シーマデトリオンフって書かれることもあるよ。", "gold": "😄 📝", "pred": "📚 🎤", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "選手権) 2009年4月22日 - 狩野、池田、福徳、金田、村上健志、中岡、谷田部が出場。優勝は狩野だった！", "gold": "🏆 🎉", "pred": "🏆 🎵 🎵", "jaccard": 0.3333333333333333, "precision": 0.5, "recall": 0.5, "f1": 0.5, "exact_match": false}
+{"text": "うたばん(TBS)に全員で出演したよ！", "gold": "📺 🎤 🎉", "pred": "🎤 📚 😅", "jaccard": 0.2, "precision": 0.3333333333333333, "recall": 0.3333333333333333, "f1": 0.3333333333333333, "exact_match": false}
+{"text": "4月の中盤は最下位が当たり前だったんだけど、ラスト10試合で8勝1分1敗っていう逆転劇を見せて、最終的に10位まで浮上してシーズン終了〜", "gold": "⚽ 🔄 🎉 🏆", "pred": "🎵 🎉 😅", "jaccard": 0.16666666666666666, "precision": 0.3333333333333333, "recall": 0.25, "f1": 0.28571428571428575, "exact_match": false}
+{"text": "ただし、この会議自体は産業遺跡の管理とかはやってないし、産業考古学の保護を目的とした団体がメンバーに入ってても、別に一緒にまとまってるわけじゃないんだよね。", "gold": "🤔 📋", "pred": "🎵 📜", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "同年7月11日のUFC 100でジェイク・オブライエンと戦って、2R目でギロチンチョークで一本取った！", "gold": "🥊 🎉 💪", "pred": "🎵 ⚽ 🎉", "jaccard": 0.2, "precision": 0.3333333333333333, "recall": 0.3333333333333333, "f1": 0.3333333333333333, "exact_match": false}
+{"text": "歴史 室町時代 - この地に天神像が奉安されたんだって。", "gold": "⛩️ 🙏 📜", "pred": "🏆 🏆 📚", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "1986年にコスモ石油が代理権取ったんだけど、事業失敗しちゃって。その後1987年にようやく大沢商会が2.0TSとミラノV6オートマチックの輸入販売始めたんだよね。", "gold": "🚗 📍 🇮🇹", "pred": "🎵 📚", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
