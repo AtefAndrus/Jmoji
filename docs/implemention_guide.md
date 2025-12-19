@@ -188,7 +188,9 @@ data:
 {"reason": "incomplete", "detail": "truncated", "text": "『天才・たけしの..."}
 ```
 
-## 3. 教師LLM（Claude）呼び出し
+## 3. 教師LLM呼び出し
+
+> **Note**: v4以降はQwen3-235B-A22Bを使用。詳細は [teacher_model_migration.md](details/teacher_model_migration.md) を参照。
 
 ### 3.1 OpenRouter クライアント
 
@@ -201,7 +203,7 @@ class OpenRouterClient:
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "anthropic/claude-haiku-4.5",
+        model: str = "qwen/qwen3-235b-a22b",  # v4以降
         base_url: str = "https://openrouter.ai/api/v1"
     ):
         self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")
@@ -291,7 +293,18 @@ def batch_generate(
 
 ### 3.4 API レート制限の詳細
 
-#### Anthropic API のレート制限
+#### Qwen3-235B-A22B のレート制限
+
+OpenRouter経由でQwen3を使用する場合:
+
+| 制限種別 | 値 |
+|---------|-----|
+| 分次制限 | 20 RPM（requests per minute） |
+| 日次制限 | なし（有料モデル使用時） |
+
+推奨設定: `max_concurrent: 10`, `request_delay: 0.3`
+
+#### Anthropic API のレート制限（参考: v1〜v3で使用）
 
 OpenRouter経由でClaude（Haiku等）を使用する場合、Anthropicのレート制限が適用される。
 
@@ -385,6 +398,16 @@ async def batch_generate_async(
 
 ### 3.6 APIコスト実績
 
+#### Qwen3-235B-A22B（v4以降の見積もり）
+
+| サンプル数 | 推定コスト |
+|-----------|-----------|
+| 1,000 | $0.23 |
+| 5,000 | $1.17 |
+| 10,000 | $2.34 |
+
+#### Claude Haiku 4.5（v1〜v3の実績）
+
 | 項目 | 値 |
 |------|-----|
 | モデル | Claude Haiku 4.5 (via OpenRouter) |
@@ -394,10 +417,12 @@ async def batch_generate_async(
 | 1サンプルあたり | 約 $0.00068 |
 | 1リクエストあたり | 約 $0.00034 |
 
-**スケール見積もり:**
+**スケール見積もり（Claude Haiku 4.5）:**
 
 - 10,000サンプル: 約 $6.8
 - 100,000サンプル: 約 $68
+
+Qwen3-235B-A22BはClaude Haiku 4.5の約1/3のコスト。
 
 ### 3.7 コンテンツポリシー拒否の検出
 

@@ -5,7 +5,10 @@ Jmojiプロジェクト用のClaude Code設定ファイル。
 ## プロジェクト概要
 
 知識蒸留を用いた日本語テキスト→絵文字翻訳モデルの開発プロジェクト。
-Claude Haiku 4.5を教師モデルとして疑似対訳データセットを構築し、日本語T5（`sonoisa/t5-base-japanese`）へ知識蒸留を行う。
+Qwen3-235B-A22Bを教師モデルとして疑似対訳データセットを構築し、日本語T5（`sonoisa/t5-base-japanese`）へ知識蒸留を行う。
+
+> **Note**: v1〜v3データセットはClaude Haiku 4.5で生成。v4以降はQwen3-235B-A22Bを使用。
+> 移行理由は [teacher_model_migration.md](docs/details/teacher_model_migration.md) を参照。
 
 ## 技術スタック
 
@@ -106,7 +109,7 @@ commit時に以下が自動実行される:
 `configs/default.yaml` に以下のセクションがある:
 
 - `data`: Wikipedia取得、サンプリング、出力パス
-- `teacher`: Claude Haiku 4.5（OpenRouter経由）の設定
+- `teacher`: Qwen3-235B-A22B（OpenRouter経由）の設定
 - `emoji`: 絵文字数制限、肌色正規化
 - `training`: T5学習ハイパーパラメータ
 - `evaluation`: 評価指標設定
@@ -117,7 +120,7 @@ commit時に以下が自動実行される:
 
 1. Wikipedia文をロード（`wikipedia_loader.py`）
 2. テキスト前処理・文抽出（`text_preprocessor.py`）
-3. Claude Haiku 4.5でSNS風変換→絵文字生成（`openrouter_client.py`, `prompts.py`）
+3. Qwen3-235B-A22BでSNS風変換→絵文字生成（`openrouter_client.py`, `prompts.py`）
 4. 絵文字抽出・検証（`emoji_utils.py`）
 5. JSONLとして保存（`dataset_generator.py`）
 
@@ -258,6 +261,7 @@ dataset = load_dataset("AtefAndrus/jmoji-dataset", data_files="data/v3.jsonl", s
 | [experiment_plan_v3_improvements.md](docs/details/experiment_plan_v3_improvements.md) | 学習改善の実験計画。学習率調整、Top-100絵文字制限、Focal Lossの4実験を計画 |
 | [experiment_v3_improvements.md](docs/details/experiment_v3_improvements.md) | **学習改善実験の結果**。4実験完了、top100が最良（Jaccard 0.058）。データ密度向上が次の課題 |
 | [dataset_generation_v3.md](docs/details/dataset_generation_v3.md) | データセット生成v3の品質改善。事前フィルタ、SNS絵文字除去、件数保証の実装詳細 |
+| [teacher_model_migration.md](docs/details/teacher_model_migration.md) | 教師モデル移行。Claude Haiku 4.5→Qwen3-235B-A22Bへの変更理由・コスト比較・設定 |
 
 ## 進捗管理
 

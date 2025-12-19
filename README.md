@@ -8,7 +8,7 @@
 
 日本語テキストから、その文の意味・ニュアンス・トーンを表現する絵文字列（1〜5個）を生成するモデルを開発するプロジェクトです。
 
-Claude Haiku 4.5を教師モデルとして疑似対訳データセットを構築し、日本語T5（`sonoisa/t5-base-japanese`）へ知識蒸留を行います。
+LLM（Qwen3-235B-A22B）を教師モデルとして疑似対訳データセットを構築し、日本語T5（`sonoisa/t5-base-japanese`）へ知識蒸留を行います。
 
 ## セットアップ
 
@@ -167,7 +167,9 @@ uv run scripts/upload_dataset_to_hf.py --versions v4
 - Python 3.12
 - パッケージ管理: uv + mise
 - Google Colab Pro（A100 80GB）での学習を想定
-- 教師モデル: Claude Haiku 4.5（OpenRouter経由）
+- 教師モデル: Qwen3-235B-A22B（OpenRouter経由）
+  - v1〜v3データセットはClaude Haiku 4.5で生成
+  - 移行理由: [docs/details/teacher_model_migration.md](docs/details/teacher_model_migration.md)
 
 ## ライセンス
 

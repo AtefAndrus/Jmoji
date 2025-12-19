@@ -1,4 +1,4 @@
-# 進捗チェックリスト（更新: 2025-12-12 学習改善実験完了）
+# 進捗チェックリスト（更新: 2025-12-19 教師モデル移行決定）
 
 ## 実装
 
@@ -89,9 +89,19 @@
 - [experiment_plan_v3_improvements.md](details/experiment_plan_v3_improvements.md): 学習改善の実験計画（lr調整、Top-100制限、Focal Loss）
 - [experiment_v3_improvements.md](details/experiment_v3_improvements.md): **学習改善実験の結果**（4実験完了、top100が最良）
 - [dataset_generation_v3.md](details/dataset_generation_v3.md): データセット生成v3の品質改善と件数保証
+- [teacher_model_migration.md](details/teacher_model_migration.md): 教師モデル移行（Claude Haiku 4.5→Qwen3-235B-A22B）
+
+## 教師モデル移行
+
+詳細は [teacher_model_migration.md](details/teacher_model_migration.md) を参照。
+
+- [ ] `configs/default.yaml`のモデルIDを`qwen/qwen3-235b-a22b`に変更
+- [ ] OpenRouterにクレジットをチャージ（$10〜$20推奨）
+- [ ] 小規模テスト（100サンプル程度）でQwen3出力品質を確認
+- [ ] 問題なければv4データセット生成を実行
 
 ## 次のステップ
 
-- [ ] v4データセット生成（10k〜20k件）— データ密度向上が最優先課題
+- [ ] v4データセット生成（10k〜20k件）— Qwen3-235B-A22Bを使用、データ密度向上が最優先課題
 - [ ] top50での追加検証（現データで即座に検証可能）
 - [ ] 人手評価の実施（Jaccard以外の品質指標確認）
