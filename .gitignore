@@ -214,6 +214,7 @@ __marimo__/
 data/outputs/*.jsonl
 data/processed/
 data/raw/
+tmp/
 
 # Model outputs (large files)
 outputs/models/
