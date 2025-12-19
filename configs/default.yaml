@@ -52,24 +52,28 @@ data:
   preview_interval: 50      # 何件ごとにサンプルプレビューを表示するか
 
 # =============================================================================
-# 教師LLM設定（Claude Haiku 4.5 via OpenRouter）
+# 教師LLM設定（Qwen3-235B-A22B via OpenRouter）
 # =============================================================================
 teacher:
-  model: "anthropic/claude-haiku-4.5"
+  model: "qwen/qwen3-235b-a22b-2507"
   base_url: "https://openrouter.ai/api/v1"
 
-  # 生成パラメータ
-  temperature: 0.7
+  # 生成パラメータ（Shisa.AI推奨: temp=0.2, min_p=0.1）
+  temperature: 0.2
   max_tokens: 100
+  min_p: 0.1             # cross-lingual leakage抑制
+  # 追加サンプリングパラメータ（必要に応じて有効化）
+  # top_p: 0.9           # nucleus sampling（省略時: モデルデフォルト）
+  # top_k: 40            # top-k sampling（省略時: モデルデフォルト）
 
   # レート制限対策
-  request_delay: 0.5       # リクエスト間の待機秒数（同期モード時）
+  request_delay: 0.3       # リクエスト間の待機秒数（同期モード時）
   max_retries: 3           # 最大リトライ回数
   timeout: 60              # タイムアウト秒数
 
   # 並列リクエスト設定（非同期モード）
   use_async: false         # 非同期モードを使用するか（--asyncで上書き可能）
-  max_concurrent: 5        # 最大同時リクエスト数
+  max_concurrent: 10       # 最大同時リクエスト数（20 RPMの半分で安全マージン）
 
 # =============================================================================
 # 絵文字設定

@@ -26,8 +26,23 @@ class FakeClient:
         self.sample_idx = 0  # 現在処理中のサンプルインデックス
         self.is_first_call = True  # そのサンプルの最初の呼び出しか
         self.fail_indices = fail_indices or set()
+        self.last_temperature: float | None = None
+        self.last_max_tokens: int | None = None
+        self.last_extra: dict | None = None
 
-    def complete(self, prompt: str) -> str:
+    def complete(
+        self,
+        prompt: str,
+        *,
+        temperature: float = 0.7,
+        max_tokens: int = 100,
+        extra: dict | None = None,
+    ) -> str:
+        # 最後の呼び出しパラメータを記録
+        self.last_temperature = temperature
+        self.last_max_tokens = max_tokens
+        self.last_extra = extra
+
         if self.is_first_call:
             # SNS変換の呼び出し
             if self.sample_idx in self.fail_indices:
@@ -52,9 +67,24 @@ class FakeAsyncClient:
         self.fail_indices = fail_indices or set()
         self._lock = asyncio.Lock()
         self._call_state: dict[int, int] = {}  # sample_idx -> call count (0 or 1)
+        self.last_temperature: float | None = None
+        self.last_max_tokens: int | None = None
+        self.last_extra: dict | None = None
 
-    async def complete(self, prompt: str) -> str:
+    async def complete(
+        self,
+        prompt: str,
+        *,
+        temperature: float = 0.7,
+        max_tokens: int = 100,
+        extra: dict | None = None,
+    ) -> str:
         async with self._lock:
+            # 最後の呼び出しパラメータを記録
+            self.last_temperature = temperature
+            self.last_max_tokens = max_tokens
+            self.last_extra = extra
+
             # プロンプトからサンプルを特定（簡易的に）
             sample_idx = self.sample_count
 
@@ -414,3 +444,94 @@ def test_is_content_policy_error_non_http_error():
     """HTTPエラー以外の例外はコンテンツポリシーエラーではない"""
     error = ValueError("Something went wrong")
     assert is_content_policy_error(error) is False
+
+
+# =============================================================================
+# 追加パラメータ（temperature, max_tokens, extra_params）テスト
+# =============================================================================
+
+
+def test_generate_dataset_with_custom_params(tmp_path: Path):
+    """generate_datasetがカスタムパラメータを渡す"""
+    client = FakeClient()
+    sentences = ["今日は楽しい"]
+    out = tmp_path / "dataset.jsonl"
+
+    extra_params = {"top_p": 0.9, "min_p": 0.1}
+
+    generate_dataset(
+        client,
+        sentences,
+        output_path=out,
+        request_delay=0,
+        show_progress=False,
+        temperature=0.5,
+        max_tokens=50,
+        extra_params=extra_params,
+    )
+
+    assert client.last_temperature == 0.5
+    assert client.last_max_tokens == 50
+    assert client.last_extra == extra_params
+
+
+def test_generate_dataset_default_params(tmp_path: Path):
+    """generate_datasetがデフォルトパラメータを使用する"""
+    client = FakeClient()
+    sentences = ["今日は楽しい"]
+    out = tmp_path / "dataset.jsonl"
+
+    generate_dataset(
+        client,
+        sentences,
+        output_path=out,
+        request_delay=0,
+        show_progress=False,
+    )
+
+    assert client.last_temperature == 0.7
+    assert client.last_max_tokens == 100
+    assert client.last_extra is None
+
+
+@pytest.mark.asyncio
+async def test_generate_dataset_async_with_custom_params(tmp_path: Path):
+    """generate_dataset_asyncがカスタムパラメータを渡す"""
+    client = FakeAsyncClient()
+    sentences = ["今日は楽しい"]
+    out = tmp_path / "dataset_async.jsonl"
+
+    extra_params = {"top_p": 0.9, "min_p": 0.1, "top_k": 40}
+
+    await generate_dataset_async(
+        client,
+        sentences,
+        output_path=out,
+        show_progress=False,
+        temperature=0.3,
+        max_tokens=80,
+        extra_params=extra_params,
+    )
+
+    assert client.last_temperature == 0.3
+    assert client.last_max_tokens == 80
+    assert client.last_extra == extra_params
+
+
+@pytest.mark.asyncio
+async def test_generate_dataset_async_default_params(tmp_path: Path):
+    """generate_dataset_asyncがデフォルトパラメータを使用する"""
+    client = FakeAsyncClient()
+    sentences = ["今日は楽しい"]
+    out = tmp_path / "dataset_async.jsonl"
+
+    await generate_dataset_async(
+        client,
+        sentences,
+        output_path=out,
+        show_progress=False,
+    )
+
+    assert client.last_temperature == 0.7
+    assert client.last_max_tokens == 100
+    assert client.last_extra is None

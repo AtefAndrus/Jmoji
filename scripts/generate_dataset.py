@@ -140,6 +140,18 @@ def main() -> None:
         )
 
 
+def _build_extra_params(teacher_cfg: dict) -> dict | None:
+    """設定から追加APIパラメータを構築"""
+    extra = {}
+    if "top_p" in teacher_cfg:
+        extra["top_p"] = float(teacher_cfg["top_p"])
+    if "min_p" in teacher_cfg:
+        extra["min_p"] = float(teacher_cfg["min_p"])
+    if "top_k" in teacher_cfg:
+        extra["top_k"] = int(teacher_cfg["top_k"])
+    return extra if extra else None
+
+
 def _run_sync(
     sentences: list[str],
     output_path: Path,
@@ -168,6 +180,9 @@ def _run_sync(
         resume=resume,
         preview_interval=int(data_cfg.get("preview_interval", 50)),
         target_count=target_count,
+        temperature=float(teacher_cfg.get("temperature", 0.7)),
+        max_tokens=int(teacher_cfg.get("max_tokens", 100)),
+        extra_params=_build_extra_params(teacher_cfg),
     )
 
     client.close()
@@ -199,6 +214,9 @@ async def _run_async(
             preview_interval=int(data_cfg.get("preview_interval", 50)),
             resume=resume,
             target_count=target_count,
+            temperature=float(teacher_cfg.get("temperature", 0.7)),
+            max_tokens=int(teacher_cfg.get("max_tokens", 100)),
+            extra_params=_build_extra_params(teacher_cfg),
         )
 
 

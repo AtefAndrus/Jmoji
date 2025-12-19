@@ -129,6 +129,9 @@ def generate_dataset(
     preview_interval: int = 50,
     show_progress: bool = True,
     target_count: Optional[int] = None,
+    temperature: float = 0.7,
+    max_tokens: int = 100,
+    extra_params: Optional[dict] = None,
 ) -> List[DataSample]:
     """データセット生成（進捗表示・途中保存対応）
 
@@ -144,6 +147,9 @@ def generate_dataset(
         preview_interval: 何件ごとにサンプルプレビューを表示するか
         show_progress: プログレスバーを表示するか
         target_count: 目標サンプル数（Noneの場合は全文を処理）
+        temperature: サンプリング温度
+        max_tokens: 最大トークン数
+        extra_params: 追加APIパラメータ（top_p, min_p, top_k等）
 
     Returns:
         生成されたDataSampleのリスト
@@ -196,12 +202,18 @@ def generate_dataset(
 
         try:
             sns_text = client.complete(
-                prompts.SNS_CONVERSION_PROMPT.format(text=sentence)
+                prompts.SNS_CONVERSION_PROMPT.format(text=sentence),
+                temperature=temperature,
+                max_tokens=max_tokens,
+                extra=extra_params,
             ).strip()
             # SNS変換結果から絵文字を除去
             sns_text = remove_emojis(sns_text).strip()
             emoji_output = client.complete(
-                prompts.EMOJI_GENERATION_PROMPT.format(text=sns_text)
+                prompts.EMOJI_GENERATION_PROMPT.format(text=sns_text),
+                temperature=temperature,
+                max_tokens=max_tokens,
+                extra=extra_params,
             ).strip()
             emojis = extract_emojis(emoji_output, max_count=max_emoji_count)
             sample = DataSample(
@@ -300,6 +312,9 @@ async def _process_single_async(
     idx: int,
     min_emoji_count: int,
     max_emoji_count: int,
+    temperature: float = 0.7,
+    max_tokens: int = 100,
+    extra_params: Optional[dict] = None,
 ) -> Tuple[int, Optional[DataSample], str]:
     """1件の非同期処理
 
@@ -308,12 +323,22 @@ async def _process_single_async(
     """
     try:
         sns_text = (
-            await client.complete(prompts.SNS_CONVERSION_PROMPT.format(text=sentence))
+            await client.complete(
+                prompts.SNS_CONVERSION_PROMPT.format(text=sentence),
+                temperature=temperature,
+                max_tokens=max_tokens,
+                extra=extra_params,
+            )
         ).strip()
         # SNS変換結果から絵文字を除去
         sns_text = remove_emojis(sns_text).strip()
         emoji_output = (
-            await client.complete(prompts.EMOJI_GENERATION_PROMPT.format(text=sns_text))
+            await client.complete(
+                prompts.EMOJI_GENERATION_PROMPT.format(text=sns_text),
+                temperature=temperature,
+                max_tokens=max_tokens,
+                extra=extra_params,
+            )
         ).strip()
         emojis = extract_emojis(emoji_output, max_count=max_emoji_count)
         sample = DataSample(
@@ -349,6 +374,9 @@ async def generate_dataset_async(
     show_progress: bool = True,
     resume: bool = True,
     target_count: Optional[int] = None,
+    temperature: float = 0.7,
+    max_tokens: int = 100,
+    extra_params: Optional[dict] = None,
 ) -> List[DataSample]:
     """非同期版データセット生成（並列リクエスト対応）
 
@@ -362,6 +390,9 @@ async def generate_dataset_async(
         show_progress: プログレスバーを表示するか
         resume: 既存ファイルがあれば続きから再開するか
         target_count: 目標サンプル数（Noneの場合は全文を処理）
+        temperature: サンプリング温度
+        max_tokens: 最大トークン数
+        extra_params: 追加APIパラメータ（top_p, min_p, top_k等）
 
     Returns:
         生成されたDataSampleのリスト
@@ -400,7 +431,14 @@ async def generate_dataset_async(
     # タスク作成
     tasks = [
         _process_single_async(
-            client, sentence, start_idx + idx, min_emoji_count, max_emoji_count
+            client,
+            sentence,
+            start_idx + idx,
+            min_emoji_count,
+            max_emoji_count,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            extra_params=extra_params,
         )
         for idx, sentence in enumerate(sentences_to_process)
     ]

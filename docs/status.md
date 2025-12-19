@@ -1,4 +1,4 @@
-# 進捗チェックリスト（更新: 2025-12-19 教師モデル移行決定）
+# 進捗チェックリスト（更新: 2025-12-19 Qwen3品質テスト完了）
 
 ## 実装
 
@@ -95,10 +95,13 @@
 
 詳細は [teacher_model_migration.md](details/teacher_model_migration.md) を参照。
 
-- [ ] `configs/default.yaml`のモデルIDを`qwen/qwen3-235b-a22b`に変更
-- [ ] OpenRouterにクレジットをチャージ（$10〜$20推奨）
-- [ ] 小規模テスト（100サンプル程度）でQwen3出力品質を確認
-- [ ] 問題なければv4データセット生成を実行
+- [x] `configs/default.yaml`のモデルIDを`qwen/qwen3-235b-a22b-2507`に変更
+- [x] OpenRouterにクレジットをチャージ（$10〜$20推奨）
+- [x] 小規模テスト（100サンプル程度）でQwen3出力品質を確認
+  - 3設定を比較検証（デフォルト / min_p=0.1 / Shisa推奨）
+  - Shisa推奨（temp=0.2, min_p=0.1）で最良: 成功率100%、Cross-lingual leakage 0件
+- [x] Shisa.AI推奨設定を`configs/default.yaml`に反映
+- [ ] v4データセット生成を実行（10k〜20k件）
 
 ## 次のステップ
 

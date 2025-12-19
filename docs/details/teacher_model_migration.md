@@ -9,7 +9,7 @@
 | 教師モデル | Claude Haiku 4.5 | **Qwen3-235B-A22B** |
 | プロバイダ | Anthropic (via OpenRouter) | Alibaba (via OpenRouter) |
 | ライセンス | 競合モデル学習禁止 | **Apache 2.0（蒸留可）** |
-| モデルID | `anthropic/claude-haiku-4.5` | `qwen/qwen3-235b-a22b` |
+| モデルID | `anthropic/claude-haiku-4.5` | `qwen/qwen3-235b-a22b-2507` |
 
 ---
 
@@ -81,12 +81,15 @@ Qwen3-235B-A22BはClaude Haiku 4.5の約1/3のコストとなる見込み。
 
 ```yaml
 teacher:
-  model: qwen/qwen3-235b-a22b
-  temperature: 0.7
+  model: qwen/qwen3-235b-a22b-2507  # instruct版（thinkingモードなし）
+  temperature: 0.2   # Shisa.AI推奨
   max_tokens: 100
+  min_p: 0.1         # cross-lingual leakage抑制
   max_concurrent: 10  # 20 RPMの半分で安全マージン
   request_delay: 0.3  # 秒
 ```
+
+> **注意**: `qwen/qwen3-235b-a22b`（サフィックスなし）はthinkingモードがデフォルトで有効であり、非ストリーミングでは空の応答を返す。`-2507`サフィックス付きのinstruct版を使用すること。
 
 ### 必要クレジット
 
@@ -102,15 +105,50 @@ Qwen3は日本語に強いが、中国語モデル由来のため以下に注意
 - `min_p=0.1`, `temp=0.2`でcross-lingual token leakageを抑制（Shisa.AI推奨）
 - 出力言語を明示的に指定するプロンプトが有効な場合あり
 
-現行プロンプト（`src/generation/prompts.py`）は基本的にそのまま使用可能だが、品質検証後に必要に応じて調整する。
+現行プロンプト（`src/generation/prompts.py`）は基本的にそのまま使用可能。品質検証の結果、Shisa.AI推奨設定で十分な品質が確認された。
+
+---
+
+## 品質テスト結果（2025-12-19）
+
+100サンプルで3つのパラメータ設定を比較検証した。
+
+### テスト条件
+
+- データソース: Wikipedia日本語版（20231101.ja）
+- サンプル数: 100件
+- 文字数制限: 10〜100文字
+- 設定ファイル: `configs/experiment/test_qwen3.yaml`
+
+### 比較結果
+
+| 設定 | 成功率 | Cross-lingual Leakage | カジュアル表現率 | ユニーク絵文字数 |
+|------|--------|----------------------|-----------------|-----------------|
+| デフォルト (temp=0.7) | 99.2% | 1件 | 86% | 152種類 |
+| min_p=0.1のみ追加 | 100% | 1件 | 88% | 115種類 |
+| **Shisa推奨 (temp=0.2, min_p=0.1)** | **100%** | **0件** | **89%** | 127種類 |
+
+### 評価基準
+
+- **成功率**: APIが有効な絵文字を返した割合
+- **Cross-lingual Leakage**: 日本語文中に英語等の混入がある件数
+- **カジュアル表現率**: SNS風の口語表現に変換できた割合
+
+### 結論
+
+Shisa.AI推奨設定（temp=0.2, min_p=0.1）を採用:
+
+- Cross-lingual leakageが完全に抑制された
+- カジュアル表現率が最も高い（89%）
+- 成功率100%で安定
 
 ---
 
 ## 移行タスク
 
-- [ ] `configs/default.yaml`のモデルIDを`qwen/qwen3-235b-a22b`に変更
-- [ ] OpenRouterにクレジットをチャージ（$10〜$20推奨）
-- [ ] 小規模テスト（100サンプル程度）でQwen3出力品質を確認
+- [x] `configs/default.yaml`のモデルIDを`qwen/qwen3-235b-a22b-2507`に変更
+- [x] OpenRouterにクレジットをチャージ（$10〜$20推奨）
+- [x] 小規模テスト（100サンプル程度）でQwen3出力品質を確認 → **Shisa推奨設定で良好**
 - [ ] 問題なければv4データセット生成（10k〜20k件）を実行
 
 ---

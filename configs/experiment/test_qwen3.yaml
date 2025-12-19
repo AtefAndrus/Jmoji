@@ -1,0 +1,80 @@
+# Qwen3-235B-A22B 品質テスト用設定（100サンプル）
+
+# =============================================================================
+# データ生成設定
+# =============================================================================
+data:
+  # Wikipediaデータセット
+  wikipedia_subset: "20231101.ja"
+  wikipedia_dataset: "wikimedia/wikipedia"
+
+  # サンプリング設定（テスト用：100件）
+  max_samples: 100
+  random_seed: 43  # v4用シード
+
+  # テキストフィルタリング
+  min_text_length: 10
+  max_text_length: 100
+
+  # NSFWコンテンツフィルタ
+  nsfw_filter:
+    enabled: true
+    keywords:
+      - "性行為"
+      - "性交"
+      - "ポルノ"
+      - "アダルト"
+      - "風俗"
+      - "売春"
+      - "淫行"
+      - "殺人"
+      - "虐殺"
+      - "拷問"
+      - "処刑"
+      - "惨殺"
+
+  # 出力パス
+  output_dir: "data/outputs"
+  output_filename: "dataset_v4_test_shisa.jsonl"
+  filter_log_filename: "filtered_sentences_v4_test_shisa.jsonl"
+
+  # 件数保証設定
+  buffer_ratio: 1.3
+
+  # 文の完全性フィルタ
+  complete_sentence_filter: true
+
+  # 進捗表示設定
+  checkpoint_interval: 20
+  preview_interval: 10
+
+# =============================================================================
+# 教師LLM設定（Qwen3-235B-A22B via OpenRouter）
+# =============================================================================
+teacher:
+  model: "qwen/qwen3-235b-a22b-2507"
+  base_url: "https://openrouter.ai/api/v1"
+
+  # 生成パラメータ（Shisa.AI推奨: temp=0.2, min_p=0.1）
+  temperature: 0.2
+  max_tokens: 100
+  min_p: 0.1
+
+  # レート制限対策
+  request_delay: 0.3
+  max_retries: 3
+  timeout: 60
+
+  # 並列リクエスト設定（非同期モード）
+  use_async: false
+  max_concurrent: 10
+
+# =============================================================================
+# 絵文字設定
+# =============================================================================
+emoji:
+  min_count: 1
+  max_count: 5
+  normalize_skin_tone: true
+  exclude_flags: false
+  exclude_symbols: false
