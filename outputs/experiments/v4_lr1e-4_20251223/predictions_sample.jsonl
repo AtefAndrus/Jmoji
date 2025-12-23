@@ -1,0 +1,20 @@
+{"text": "それ聞いてポーレットが、「ミシェルの兄が埋葬されてる墓地にも、十字架めっちゃあるよ」って言い出した。", "gold": "⛪ 🪦 😭 🗣️ 💔", "pred": "😊 😊 😊 🎉 😊", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "息子の鹿島直は写真家なんだよね。", "gold": "🦌 📸 👨‍👦 📷 💼", "pred": "📚 📚 😊 🔥 🔥", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "1973年4月2日、星組に配属されたよ〜", "gold": "🎭 🎶 🌟 💃 🎬", "pred": "📚 😊 😊 📚 👏", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "生きているアピールするためにいろんな事件を起こすんだけど、全部アデルに阻まれてて草", "gold": "😂 🤣 😅 💥 🎭", "pred": "📚 💪 🔍 😊 🤔", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "哲学者で人間学者のアルノルト・ゲーレンって、実はいとこなんだよね。", "gold": "🤔 🧠 📚 🧑‍🏫 🧬", "pred": "😊 😊 🇯🇵 😊 🇯🇵", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "ノアの方舟ってやつだね〜", "gold": "🚢 🐘 🐅 🌈 🤔", "pred": "📚 🔍 📚", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "Gitにはこんなマージアルゴリズムが実装されてるよ〜", "gold": "💻 🛠️ 🌐 🤓 👍", "pred": "🤔 🤔 🇯🇵 😊 😊", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "昔はスルーフットスーのダイヤモンドホースシューって言ってたんだよね。", "gold": "🐴 🔤 💬 🤔 😄", "pred": "😊 🇯🇵 🇯🇵 🤔 🤔", "jaccard": 0.14285714285714285, "precision": 0.3333333333333333, "recall": 0.2, "f1": 0.25, "exact_match": false}
+{"text": "このイベントで審査員してた作曲家の船村徹さんに誘われて上京して、日本コロムビアと専属契約したんだ～。", "gold": "🎵 🎶 🎤 🏆 😊", "pred": "🎵 📚 😊 🇯🇵 😊", "jaccard": 0.2857142857142857, "precision": 0.5, "recall": 0.4, "f1": 0.4444444444444445, "exact_match": false}
+{"text": "水戸徳川家では、お母さんの聰子とその前の当主・昭武が、家のことまとめて取り仕切ることにしたらしい。", "gold": "🏯 👨‍👩‍👦 💼 🏛️", "pred": "🇯🇵 😊 🏛️ 📚 😊", "jaccard": 0.14285714285714285, "precision": 0.25, "recall": 0.25, "f1": 0.25, "exact_match": false}
+{"text": "17億年くらい前から、球みたいな化石がめっちゃたくさん見つかってるんだって！", "gold": "🔬 🦠 🌍 🤯 🕵️‍♂️", "pred": "😊 🇯🇵 🏛️ 🇯🇵 😊", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "武闘会の会場に向かう途中でホルルト村に寄って、アデルに武闘会のこと教えてきた〜", "gold": "🥋 🏘️ 👩‍🦰 🗣️ 🚶‍♀️", "pred": "😊 🤝 😊 📜 😊", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "メスと赤ちゃんだけで、3〜10匹くらいのグループを作るよ。", "gold": "🐾 👶 👩‍🦰 🤗 💕", "pred": "🏛️ 🎉 🤔 📚 😊", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "2018-19シーズンの4月から、猫魔スキー場で試験的に、エキサイトチェアの山頂からピークチェアの山頂まで歩けるルートがオープンしたよ！", "gold": "⛷️ 🐈 ⬛ 🏔️ 😄", "pred": "😊 😔 🎉 🎉 🇯🇵", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "IEのコンポーネントブラウザ「Donut」に似た感じのインターフェースなんだって〜", "gold": "💻 🖥️ 🔍 😮 👍", "pred": "🤝 😊 😊 😊 😊", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "それまでの学説が「所有権、いつ移るか」って一点ばっか議論してたのに対し、これはもう完全にコペルニクス的転回だよね。", "gold": "🧠 🔄 📚 🤯 💡", "pred": "🤔 😊 🚀 😊 📚", "jaccard": 0.125, "precision": 0.25, "recall": 0.2, "f1": 0.22222222222222224, "exact_match": false}
+{"text": "（30年勅令314号、海軍高等武官補充条例7条）", "gold": "⚓ 🎖️ 📚 📜 🇯🇵", "pred": "😊 📜 📚 😊 📜", "jaccard": 0.3333333333333333, "precision": 0.6666666666666666, "recall": 0.4, "f1": 0.5, "exact_match": false}
+{"text": "10月に、長男の拓跋六脩や、拓跋猗㐌の息子・拓跋普根、それに衛雄、范班、箕澹たちを先頭に立てて出陣させた。拓跋猗盧は20万の軍を率いて後ろから続いたって感じ。", "gold": "⚔️ 🛡️ 🐎 🏇 🔥", "pred": "🧠 😊 📚 📚 😊", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
+{"text": "体重10トンまでいくって、現存する陸上の動物でダントツ最大級！", "gold": "🐘 💪 🌍 😱 🔥", "pred": "🔥 🏛️ 💡 🏛️ 🇯🇵", "jaccard": 0.125, "precision": 0.25, "recall": 0.2, "f1": 0.22222222222222224, "exact_match": false}
+{"text": "2012年11月時点で発行されてるポイントカードは「ノジマ・スーパーポイントカード」（磁気式・データ印字型）ってやつね。", "gold": "💳 🛒 📅 🏬 🤔", "pred": "😊 📚 🇯🇵 😊 😊", "jaccard": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0, "exact_match": false}
