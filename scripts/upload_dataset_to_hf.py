@@ -44,8 +44,8 @@ def main() -> None:
     parser.add_argument(
         "--versions",
         nargs="+",
-        default=["v1", "v2", "v3"],
-        help="Dataset versions to upload (default: v1 v2 v3)",
+        default=["v1", "v2", "v3", "v4"],
+        help="Dataset versions to upload (default: v1 v2 v3 v4)",
     )
     parser.add_argument(
         "--repo-id",
@@ -124,19 +124,20 @@ tags:
 
 ## データセット構成
 
-| バージョン | サンプル数 | 説明 |
-|------------|------------|------|
-| v1 | 1,000 | 初期版 |
-| v2 | ~5,000 | ✨禁止プロンプト適用 |
-| v3 | 5,000 | 品質改善版（事前フィルタ・件数保証） |
+| バージョン | サンプル数 | 教師モデル | 説明 |
+|------------|------------|------------|------|
+| v1 | 1,000 | Claude Haiku 4.5 | 初期版 |
+| v2 | ~5,000 | Claude Haiku 4.5 | ✨禁止プロンプト適用 |
+| v3 | 5,000 | Claude Haiku 4.5 | 品質改善版（事前フィルタ・件数保証） |
+| v4 | 20,000 | Qwen3-235B-A22B | データ密度向上版 |
 
 ## 使用方法
 
 ```python
 from datasets import load_dataset
 
-# 最新バージョン（v3）をロード
-dataset = load_dataset("{args.repo_id}", data_files="data/v3.jsonl", split="train")
+# 最新バージョン（v4）をロード
+dataset = load_dataset("{args.repo_id}", data_files="data/v4.jsonl", split="train")
 
 # 特定バージョンをロード
 dataset_v1 = load_dataset("{args.repo_id}", data_files="data/v1.jsonl", split="train")
@@ -152,7 +153,10 @@ dataset_v1 = load_dataset("{args.repo_id}", data_files="data/v1.jsonl", split="t
 
 ## 生成方法
 
-Claude Haiku 4.5を教師モデルとして、Wikipedia日本語版から抽出した文をSNS風テキストに変換し、対応する絵文字を生成。
+Wikipedia日本語版から抽出した文をSNS風テキストに変換し、対応する絵文字を生成。
+
+- **v1〜v3**: Claude Haiku 4.5を教師モデルとして使用
+- **v4**: Qwen3-235B-A22B（Apache 2.0ライセンス）を教師モデルとして使用
 
 詳細: https://github.com/AtefAndrus/Jmoji
 """

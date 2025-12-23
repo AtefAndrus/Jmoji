@@ -235,8 +235,8 @@ uv run scripts/upload_dataset_to_hf.py --versions v3 v4
 ```python
 from datasets import load_dataset
 
-# 最新バージョン（v3）をロード
-dataset = load_dataset("AtefAndrus/jmoji-dataset", data_files="data/v3.jsonl", split="train")
+# 最新バージョン（v4）をロード
+dataset = load_dataset("AtefAndrus/jmoji-dataset", data_files="data/v4.jsonl", split="train")
 ```
 
 ## ドキュメント
