@@ -1,4 +1,4 @@
-# 進捗チェックリスト（更新: 2025-12-23 v4 HuggingFace Hubアップロード完了）
+# 進捗チェックリスト（更新: 2025-12-24 v4学習実験完了、Jaccard 0.12達成）
 
 ## 実装
 
@@ -66,6 +66,9 @@
   - [x] Exp2: Top-100絵文字制限 (v3_top100) → **Jaccard 0.058（+29%、最良）**
   - [x] Exp3: 組み合わせ (v3_lr1e-4_top100) → 失敗（学習率低すぎ）
   - [x] Exp4: Focal Loss + Top-100 (v3_focal_top100) → Jaccard 0.058、初Exact Match
+- [x] **v4データセット学習実験** → 完了、詳細は [実験結果](details/experiment_v4_results.md)
+  - [x] v4_lr1e-4: 20k件全件使用 → Jaccard 0.066（+14% vs v3_top100）
+  - [x] v4_top100: top100フィルタ適用 → **Jaccard 0.120（+106% vs v3_top100、目標達成）**
 - [ ] ベースラインvs学生モデルの自動評価レポート
 - [ ] 人手評価フレームの整備と評価者リクルート
 - [ ] エラー分析テンプレートでの事例収集
@@ -89,7 +92,8 @@
 - [experiment_v1_1000samples.md](details/experiment_v1_1000samples.md): 1,000件データセットでの学習結果（mode collapse発生）
 - [experiment_v3_5000samples.md](details/experiment_v3_5000samples.md): 5,000件データセットでの学習結果（soft mode collapse発生）
 - [experiment_plan_v3_improvements.md](details/experiment_plan_v3_improvements.md): 学習改善の実験計画（lr調整、Top-100制限、Focal Loss）
-- [experiment_v3_improvements.md](details/experiment_v3_improvements.md): **学習改善実験の結果**（4実験完了、top100が最良）
+- [experiment_v3_improvements.md](details/experiment_v3_improvements.md): 学習改善実験の結果（4実験完了、top100が最良）
+- [experiment_v4_results.md](details/experiment_v4_results.md): **v4データセット学習実験の結果**（Jaccard 0.12達成）
 - [dataset_generation_v3.md](details/dataset_generation_v3.md): データセット生成v3の品質改善と件数保証
 - [teacher_model_migration.md](details/teacher_model_migration.md): 教師モデル移行（Claude Haiku 4.5→Qwen3-235B-A22B）
 
@@ -107,8 +111,9 @@
 
 ## 次のステップ
 
-- [ ] **v4データセットでの学習実験** — 20k件（top100フィルタ後約8,800件、88件/絵文字）で大幅改善を期待
-- [ ] top50での追加検証（現データで即座に検証可能）
+- [x] **v4データセットでの学習実験** → **完了**（2025-12-24）、Jaccard 0.12達成
+- [ ] **v4_focal_top100の検証** — Focal Lossで低頻度絵文字の学習促進、多様性改善を期待
+- [ ] top50での追加検証（件/絵文字 84件でさらなる精度向上を期待）
 - [ ] 人手評価の実施（Jaccard以外の品質指標確認）
 - [x] v4データセットをHuggingFace Hubにアップロード → **完了**（2025-12-23）
 
