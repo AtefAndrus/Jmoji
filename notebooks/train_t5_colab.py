@@ -51,7 +51,7 @@ from datetime import datetime
 # 実験設定（ここを変更して実験を切り替える）
 # =============================================================================
 DATASET_VERSION = "v4"
-EXPERIMENT_TYPE = "top50"  # baseline, lr1e-4, top100, top50, lr1e-4_top100, focal, focal_top100, focal_top50
+EXPERIMENT_TYPE = "focal_top50"  # baseline, lr1e-4, top100, top50, lr1e-4_top100, focal, focal_top100, focal_top50
 
 # =============================================================================
 # 実験タイプに応じた設定の自動調整
