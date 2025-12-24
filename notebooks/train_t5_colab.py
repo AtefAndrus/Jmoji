@@ -37,10 +37,12 @@ if torch.cuda.is_available():
 # |-----------|------|
 # | baseline | ベースライン（lr=3e-4） |
 # | lr1e-4 | 学習率調整（lr=1e-4） |
-# | top100 | Top-100絵文字制限 |
+# | top100 | Top-100絵文字制限（約42件/絵文字） |
+# | top50 | Top-50絵文字制限（約84件/絵文字） |
 # | lr1e-4_top100 | lr=1e-4 + Top-100制限 |
 # | focal | Focal Loss（γ=2.0） |
 # | focal_top100 | Focal Loss + Top-100制限 |
+# | focal_top50 | Focal Loss + Top-50制限 |
 
 # %%
 from datetime import datetime
@@ -49,7 +51,7 @@ from datetime import datetime
 # 実験設定（ここを変更して実験を切り替える）
 # =============================================================================
 DATASET_VERSION = "v4"
-EXPERIMENT_TYPE = "focal_top100"  # baseline, lr1e-4, top100, lr1e-4_top100, focal, focal_top100
+EXPERIMENT_TYPE = "top50"  # baseline, lr1e-4, top100, top50, lr1e-4_top100, focal, focal_top100, focal_top50
 
 # =============================================================================
 # 実験タイプに応じた設定の自動調整
@@ -86,7 +88,8 @@ CONFIG = {
     # 実験固有の設定
     "use_focal_loss": False,
     "focal_gamma": 2.0,
-    "use_top100_filter": False,
+    "use_top_n_filter": False,
+    "top_n": 100,  # 100 or 50
 }
 
 # 実験タイプに応じた設定の上書き
@@ -94,8 +97,13 @@ if "lr1e-4" in EXPERIMENT_TYPE:
     CONFIG["learning_rate"] = 1e-4
     print("Setting: learning_rate = 1e-4")
 
-if "top100" in EXPERIMENT_TYPE:
-    CONFIG["use_top100_filter"] = True
+if "top50" in EXPERIMENT_TYPE:
+    CONFIG["use_top_n_filter"] = True
+    CONFIG["top_n"] = 50
+    print("Setting: Top-50 emoji filter enabled")
+elif "top100" in EXPERIMENT_TYPE:
+    CONFIG["use_top_n_filter"] = True
+    CONFIG["top_n"] = 100
     print("Setting: Top-100 emoji filter enabled")
 
 if "focal" in EXPERIMENT_TYPE:
@@ -195,20 +203,24 @@ TOP_5_EMOJIS = set(e for e, _ in emoji_counts.most_common(5))
 print(f"\nTop 5 emojis (for diversity metric): {TOP_5_EMOJIS}")
 
 # %% [markdown]
-# ## 3.6 Top-100絵文字フィルタリング（オプション）
+# ## 3.6 Top-N絵文字フィルタリング（オプション）
 #
-# `use_top100_filter=True` の場合、Top-100絵文字のみを含むサンプルに制限する。
+# `use_top_n_filter=True` の場合、Top-N絵文字のみを含むサンプルに制限する。
+# - top100: 約42件/絵文字
+# - top50: 約84件/絵文字（データ密度2倍）
 
 # %%
-if CONFIG["use_top100_filter"]:
+if CONFIG["use_top_n_filter"]:
     # フィルタリング（src/data/emoji_utils.pyの関数を使用）
+    top_n = CONFIG["top_n"]
     original_count = len(samples)
-    samples, emoji_counts, top_100_emojis = filter_samples_by_top_emojis(
-        samples, top_n=100
+    samples, emoji_counts, top_n_emojis = filter_samples_by_top_emojis(
+        samples, top_n=top_n
     )
-    print(f"Top-100 emojis: {len(top_100_emojis)}")
+    print(f"Top-{top_n} emojis: {len(top_n_emojis)}")
     print(f"Filtered samples: {len(samples)} / {original_count} ({len(samples)/original_count*100:.1f}%)")
     print(f"Unique emojis after filter: {len(emoji_counts)}")
+    print(f"Samples per emoji: {len(samples) / top_n:.1f}")
 
     # 分割を再実行
     train_samples, val_samples, test_samples = split_dataset(
@@ -218,7 +230,7 @@ if CONFIG["use_top100_filter"]:
     )
     print(f"Train: {len(train_samples)}, Val: {len(val_samples)}, Test: {len(test_samples)}")
 else:
-    print("Top-100 filter: DISABLED")
+    print("Top-N filter: DISABLED")
 
 # %% [markdown]
 # ## 4. モデル・トークナイザ準備
