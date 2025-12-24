@@ -42,7 +42,9 @@ Jmoji/
 │   └── logs/         # 一時ログ（.gitignore）
 ├── scripts/          # CLIスクリプト
 │   ├── generate_dataset.py    # データセット生成
-│   └── train.py               # モデル学習
+│   ├── train.py               # モデル学習
+│   ├── generate_predictions.py  # モデル推論（Hub連携）
+│   └── prepare_human_eval.py    # 人手評価サンプル準備
 ├── src/              # ソースコード
 │   ├── config.py              # 設定ロード
 │   ├── data/                  # データ処理
@@ -79,6 +81,19 @@ uv run scripts/generate_dataset.py --config configs/default.yaml
 
 # モデル学習
 uv run scripts/train.py --config configs/default.yaml
+
+# モデル推論（HuggingFace Hubから）
+uv run scripts/generate_predictions.py \
+    --model AtefAndrus/jmoji-t5-v4_focal_top50_20251224 \
+    --input texts.txt \
+    --output predictions.jsonl
+
+# 人手評価サンプル生成（50件）
+uv run scripts/prepare_human_eval.py \
+    --model-a-repo AtefAndrus/jmoji-t5-v4_focal_top50_20251224 \
+    --model-b-repo AtefAndrus/jmoji-t5-v4_top50_20251224 \
+    --input-file data/test.jsonl \
+    --max-samples 50
 ```
 
 ### テスト・リント
@@ -162,6 +177,15 @@ OPENROUTER_API_KEY=your_api_key_here
 `notebooks/train_t5_colab.ipynb` でワンクリック学習が可能。READMEの「Open in Colab」バッジから起動できる。
 
 ノートブックは `notebooks/train_t5_colab.py`（percent format）から jupytext で自動生成される。
+
+## Colab推論
+
+`notebooks/inference.ipynb` でHuggingFace Hubから学習済みモデルをロードして推論が可能。
+
+機能:
+- インタラクティブ推論（任意テキスト）
+- バッチ推論（テストセットから50件）
+- 人手評価用CSV/Markdownエクスポート
 
 ## 運用ルール
 

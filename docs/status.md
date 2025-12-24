@@ -1,4 +1,4 @@
-# 進捗チェックリスト（更新: 2025-12-25 v4実験完了、Jaccard 0.182達成）
+# 進捗チェックリスト（更新: 2025-12-25 モデル推論機能追加）
 
 ## 実装
 
@@ -10,6 +10,7 @@
 - [x] 評価指標（Jaccard, Precision/Recall/F1, Micro-F1, Exact Match, 長さ分布）
 - [x] T5用DatasetとTrainer生成ユーティリティ（絵文字トークン追加含む）
 - [x] T5推論・評価関数（`generate_emoji`, `evaluate_model`, `EvaluationResult`）
+- [x] HuggingFace Hubモデルロード（`load_model_from_hub`）
 - [x] Wikipediaデータローダー（事前フィルタ統合・フィルタログ出力）
 - [x] NSFWコンテンツフィルタ（キーワードブラックリストによる事前フィルタ + API拒否ログ）
 - [x] pre-commit設定（jupytext, ruff, mypy, trailing-whitespace等）
@@ -38,6 +39,15 @@
   - [x] 絵文字トークン追加済みモデルのロードとTrainer構築（early stopping, logging）
   - [x] 評価結果を `outputs/evaluation` に保存
 - [x] `scripts/upload_dataset_to_hf.py`: データセットをHuggingFace Hubにアップロード
+- [x] `scripts/generate_predictions.py`: HuggingFace Hubからモデルをロードして推論
+  - [x] テキストファイル/JSONL/標準入力からの推論
+  - [x] JSONL/テキスト形式での出力
+  - [x] サンプリング/Beam Search切り替え
+- [x] `scripts/prepare_human_eval.py`: 人手評価サンプル準備（Hub連携機能追加）
+  - [x] 既存の予測ファイルをマージ（従来機能）
+  - [x] HuggingFace Hubからモデルをロードして推論（新機能）
+  - [x] テストセットから50件をランダム抽出
+  - [x] JSONL/CSV/Markdown形式で出力
 
 ## テスト
 
@@ -90,6 +100,11 @@
 - [x] Top-100絵文字フィルタリング（`use_top100_filter`オプション）
 - [x] Focal Loss対応（`use_focal_loss`オプション）
 - [x] 多様性指標の評価・保存
+- [x] `notebooks/inference.py`: Colab推論用ノートブック
+  - [x] HuggingFace Hubからモデルロード
+  - [x] インタラクティブ推論（任意テキスト）
+  - [x] バッチ推論（テストセットから50件）
+  - [x] 人手評価用CSV/Markdownエクスポート
 
 ## 実験記録・技術ドキュメント
 
