@@ -2,7 +2,10 @@
 
 ## 1. 概要
 
-本研究では、教師LLM（Claude Haiku 4.5）が生成した絵文字列を「疑似正解」として、学生モデルの出力を評価します。
+本研究では、教師LLM（Qwen3-235B-A22B）が生成した絵文字列を「疑似正解」として、学生モデルの出力を評価します。
+
+> **Note**: v1〜v3データセットはClaude Haiku 4.5で生成。v4以降はQwen3-235B-A22Bを使用。
+> 移行理由は [teacher_model_migration.md](details/teacher_model_migration.md) を参照。
 
 絵文字の「正解」は本質的に一意ではないため、複数の定量指標と人手評価を組み合わせて多面的に評価を行います。
 
@@ -251,6 +254,111 @@ def inter_rater_agreement(ratings_a: list, ratings_b: list) -> float:
     """評価者間一致度（Cohen's kappa）"""
     return cohen_kappa_score(ratings_a, ratings_b)
 ```
+
+### 3.5 実施計画（v4データセット）
+
+v4データセットでの学習実験完了後、以下の計画で人手評価を実施する。
+
+#### 3.5.1 評価対象モデル
+
+| モデル | Jaccard | 多様性 | 選定理由 |
+|--------|---------|--------|----------|
+| v4_focal_top50 | 0.182 | 14% | 精度最良 |
+| v4_top50 | 0.165 | 21% | バランス型 |
+| 教師モデル（Qwen3） | - | - | 比較基準（Gold） |
+
+#### 3.5.2 評価サンプル
+
+| 項目 | 設定 |
+|------|------|
+| 件数 | 20〜50件 |
+| 抽出元 | v4_top50テストセット または 任意のテキスト |
+| 抽出条件 | 両モデルで予測可能なサンプル |
+| 保存先 | `outputs/human_eval/samples.jsonl` |
+
+**現状**: 既存の予測サンプル20件を使用（`scripts/prepare_human_eval.py`で生成済み）
+
+**TODO: モデル推論機能の追加**
+
+任意のテキストから評価サンプルを生成するため、以下の機能を実装する:
+
+1. **HuggingFace Hubからのモデルロード**
+   - `AtefAndrus/jmoji-t5-v4_focal_top50_20251224`（精度重視）
+   - `AtefAndrus/jmoji-t5-v4_top50_20251224`（バランス型）
+
+2. **推論スクリプトの作成**
+   ```bash
+   # 例: 任意のテキストファイルから予測を生成
+   uv run scripts/generate_predictions.py \
+       --model AtefAndrus/jmoji-t5-v4_focal_top50_20251224 \
+       --input texts.txt \
+       --output predictions.jsonl
+   ```
+
+3. **人手評価サンプル拡張**
+   ```bash
+   # テストセット全体（134件）から50件を抽出
+   uv run scripts/prepare_human_eval.py \
+       --model-a-repo AtefAndrus/jmoji-t5-v4_focal_top50_20251224 \
+       --model-b-repo AtefAndrus/jmoji-t5-v4_top50_20251224 \
+       --input-file data/v4_top50_test.jsonl \
+       --max-samples 50
+   ```
+
+#### 3.5.3 評価フォーマット
+
+Googleフォームを使用（集計自動化のため）。
+
+**フォーム構成**:
+1. サンプルID（自動記録）
+2. 入力文（表示のみ）
+3. 教師出力の評価（意味的一致度、自然さ、誤解の可能性）
+4. 学生出力Aの評価（v4_focal_top50）
+5. 学生出力Bの評価（v4_top50）
+6. どちらが良いか（A/B/同等）
+7. 自由コメント（任意）
+
+#### 3.5.4 評価者
+
+| 項目 | 設定 |
+|------|------|
+| 人数 | 1〜3名 |
+| 条件 | 日本語ネイティブ、SNS利用経験あり |
+| 所要時間 | 約30分（50件 × 30秒/件） |
+
+#### 3.5.5 実施手順
+
+```text
+Step 1: 評価サンプル抽出
+        └─ scripts/prepare_human_eval.py（新規作成）
+        └─ 出力: outputs/human_eval/samples.jsonl
+
+Step 2: Googleフォーム作成
+        └─ テンプレートから作成
+        └─ サンプルをフォームに転記
+
+Step 3: 評価実施
+        └─ 評価者にフォームURL共有
+        └─ 回答収集（1〜2日）
+
+Step 4: 結果集計
+        └─ Googleスプレッドシートからエクスポート
+        └─ scripts/analyze_human_eval.py（新規作成）
+        └─ 出力: outputs/human_eval/results.json
+
+Step 5: レポート作成
+        └─ 定量評価との比較分析
+        └─ docs/details/human_eval_results.md
+```
+
+#### 3.5.6 成果物
+
+| ファイル | 内容 |
+|----------|------|
+| `outputs/human_eval/samples.jsonl` | 評価サンプル（50件） |
+| `outputs/human_eval/responses.csv` | 評価者の回答（Googleフォームからエクスポート） |
+| `outputs/human_eval/results.json` | 集計結果 |
+| `docs/details/human_eval_results.md` | 分析レポート |
 
 ## 4. 評価パイプライン
 
