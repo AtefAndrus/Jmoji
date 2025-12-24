@@ -117,6 +117,17 @@ for k, v in CONFIG.items():
 import sys
 sys.path.append("/content/Jmoji")
 
+# HuggingFace Hubにログイン（privateデータセットアクセス用）
+from huggingface_hub import login
+from google.colab import userdata
+
+try:
+    HF_TOKEN = userdata.get('HF_TOKEN')
+    login(token=HF_TOKEN)
+    print("Logged in to HuggingFace Hub")
+except userdata.SecretNotFoundError:
+    print("HF_TOKEN not found. Proceeding without login (public datasets only).")
+
 from datasets import load_dataset
 
 from src.models.t5_trainer import (
