@@ -121,7 +121,11 @@
   - バランス型: v4_top50（Jaccard 0.165、多様性21%）
 - [ ] **人手評価の実施** — 実施計画は [evaluation.md](evaluation.md) セクション3.5 参照
   - [x] Step 1: 評価サンプル抽出（scripts/prepare_human_eval.py作成済み、20件生成）
-  - [ ] Step 1.5: モデル推論機能追加（任意テキストから予測生成、50件への拡張）
+  - [x] Step 1.5: モデル推論機能追加（任意テキストから予測生成、50件への拡張）
+    - `src/models/t5_trainer.py` に `load_model_from_hub()` 追加
+    - `scripts/generate_predictions.py` 新規作成（CLI推論）
+    - `scripts/prepare_human_eval.py` 拡張（Hub連携機能）
+    - `notebooks/inference.py` 新規作成（Colab用）
   - [ ] Step 2: Googleフォーム作成
   - [ ] Step 3: 評価実施（1〜3名）
   - [ ] Step 4: 結果集計・分析

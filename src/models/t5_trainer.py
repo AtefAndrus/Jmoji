@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import random
 from dataclasses import dataclass
 from pathlib import Path
@@ -118,6 +119,46 @@ def setup_model_with_emoji_tokens(
     num_added = tokenizer.add_tokens(emoji_tokens)
     if num_added > 0:
         model.resize_token_embeddings(len(tokenizer))
+    return tokenizer, model
+
+
+def load_model_from_hub(
+    repo_id: str,
+    token: Optional[str] = None,
+    device: Optional[str] = None,
+) -> Tuple[T5Tokenizer, T5ForConditionalGeneration]:
+    """HuggingFace Hubからモデルとトークナイザをロードする。
+
+    Args:
+        repo_id: HuggingFace Hubのリポジトリ ID
+                 例: "AtefAndrus/jmoji-t5-v4_focal_top50_20251224"
+        token: HuggingFaceトークン（プライベートリポジトリ用）。
+               Noneの場合は環境変数 HF_TOKEN を使用。
+        device: デバイス（None時は自動検出: cuda優先）
+
+    Returns:
+        Tuple[T5Tokenizer, T5ForConditionalGeneration]: トークナイザとモデル
+
+    Raises:
+        EnvironmentError: プライベートリポジトリでトークンが見つからない場合
+        OSError: リポジトリが存在しない場合
+    """
+    # トークンの優先順位: 引数 > 環境変数
+    if token is None:
+        token = os.environ.get("HF_TOKEN")
+
+    # デバイス自動検出
+    if device is None:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    # トークナイザとモデルをロード
+    # Hubにはトークナイザも一緒に保存されている（絵文字トークン追加済み）
+    tokenizer = T5Tokenizer.from_pretrained(repo_id, token=token, legacy=False)
+    model = T5ForConditionalGeneration.from_pretrained(repo_id, token=token)
+
+    # デバイスに移動
+    model = model.to(device)
+
     return tokenizer, model
 
 
@@ -548,6 +589,7 @@ __all__ = [
     "EmojiDataset",
     "TrainConfig",
     "setup_model_with_emoji_tokens",
+    "load_model_from_hub",
     "build_trainer",
     "FocalLossTrainer",
     "build_focal_loss_trainer",

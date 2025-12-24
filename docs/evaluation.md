@@ -276,40 +276,50 @@ v4データセットでの学習実験完了後、以下の計画で人手評価
 | 抽出条件 | 両モデルで予測可能なサンプル |
 | 保存先 | `outputs/human_eval/samples.jsonl` |
 
-**現状**: 既存の予測サンプル20件を使用（`scripts/prepare_human_eval.py`で生成済み）
+**現状**: モデル推論機能実装済み。50件の評価サンプル生成が可能。
 
-**TODO: モデル推論機能の追加**
+**実装済みの機能**:
 
-任意のテキストから評価サンプルを生成するため、以下の機能を実装する:
+1. **HuggingFace Hubからのモデルロード** (`src/models/t5_trainer.py`)
 
-1. **HuggingFace Hubからのモデルロード**
-   - `AtefAndrus/jmoji-t5-v4_focal_top50_20251224`（精度重視）
-   - `AtefAndrus/jmoji-t5-v4_top50_20251224`（バランス型）
+   ```python
+   from src.models.t5_trainer import load_model_from_hub, generate_emoji
+   tokenizer, model = load_model_from_hub("AtefAndrus/jmoji-t5-v4_focal_top50_20251224")
+   result = generate_emoji(model, tokenizer, "今日は楽しかった")
+   ```
 
-2. **推論スクリプトの作成**
+2. **推論スクリプト** (`scripts/generate_predictions.py`)
+
    ```bash
-   # 例: 任意のテキストファイルから予測を生成
+   # 任意のテキストファイルから予測を生成
    uv run scripts/generate_predictions.py \
        --model AtefAndrus/jmoji-t5-v4_focal_top50_20251224 \
        --input texts.txt \
        --output predictions.jsonl
    ```
 
-3. **人手評価サンプル拡張**
+3. **人手評価サンプル生成** (`scripts/prepare_human_eval.py`)
+
    ```bash
-   # テストセット全体（134件）から50件を抽出
+   # HuggingFace Hubから推論して50件抽出
    uv run scripts/prepare_human_eval.py \
        --model-a-repo AtefAndrus/jmoji-t5-v4_focal_top50_20251224 \
        --model-b-repo AtefAndrus/jmoji-t5-v4_top50_20251224 \
-       --input-file data/v4_top50_test.jsonl \
+       --input-file data/test.jsonl \
        --max-samples 50
    ```
+
+4. **Colab推論ノートブック** (`notebooks/inference.py`)
+   - インタラクティブ推論
+   - バッチ推論（50件）
+   - CSV/Markdownエクスポート
 
 #### 3.5.3 評価フォーマット
 
 Googleフォームを使用（集計自動化のため）。
 
 **フォーム構成**:
+
 1. サンプルID（自動記録）
 2. 入力文（表示のみ）
 3. 教師出力の評価（意味的一致度、自然さ、誤解の可能性）
