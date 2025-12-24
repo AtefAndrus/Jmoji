@@ -48,8 +48,8 @@ from datetime import datetime
 # =============================================================================
 # 実験設定（ここを変更して実験を切り替える）
 # =============================================================================
-DATASET_VERSION = "v3"
-EXPERIMENT_TYPE = "lr1e-4"  # baseline, lr1e-4, top100, lr1e-4_top100, focal, focal_top100
+DATASET_VERSION = "v4"
+EXPERIMENT_TYPE = "top100"  # baseline, lr1e-4, top100, lr1e-4_top100, focal, focal_top100
 
 # =============================================================================
 # 実験タイプに応じた設定の自動調整
