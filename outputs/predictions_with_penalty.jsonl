@@ -1,0 +1,20 @@
+{"sample_id": 1, "text": "大紫ってのは壬申の功臣の中でもけっこう上のクラスなんだけど、『書紀』の壬申の乱のとこ見ても星川麻呂の名前出てこないから、結局どんな活躍したのかはよくわかんないんだよな〜。", "gold": "🤔 📚 📖 🇯🇵 🔍", "pred_original": "📖 📚 📚 👏 📚", "pred_with_penalty": "📚 🎉 🤔 🇯🇵 😊"}
+{"sample_id": 2, "text": "三木改造内閣の時に、自民党の党三役（幹事長、政調会長、総務会長）って、主流派じゃない「三木おろし」の中心だった挙党協には属してない人を閣僚に抜擢したんだって。", "gold": "🤔 🇯🇵 🏛️ 💬 🤝", "pred_original": "🎉 🔥 📚 😊 😊", "pred_with_penalty": "🎓 👏 😊 🎉 🇯🇵"}
+{"sample_id": 3, "text": "港区の大会で上位入賞したりして、結構アピールしたわ〜", "gold": "🏆 🎉 👏 🇯🇵 💪", "pred_original": "🎉 🇯🇵 🇯🇵 😊 🇯🇵", "pred_with_penalty": "📚 📚 👏 🎓 😊"}
+{"sample_id": 4, "text": "片山さん本人も、NR500から10年たってこんな風に言ってるんだよね。", "gold": "😊 🤔 💬", "pred_original": "🇯🇵 👏 🎓 📚 🎉", "pred_with_penalty": "🎉 📖 🎉 😊 👏"}
+{"sample_id": 5, "text": "トークの部分だけど、「ポップジャム 第8シーズン」と同じで、NHKのスタジオで別々に収録してたんだって。", "gold": "📺 🎤 🎵 📚 😊", "pred_original": "📚 🇯🇵 🎉 🎓 📚", "pred_with_penalty": "🇯🇵 🎉 😊 😊 👏"}
+{"sample_id": 6, "text": "ちなみに、その学校はミネソタ州立大学が秋田にキャンパス作るときの主な役割を担ってたんだ。今じゃその跡地に国際教養大学が立ってて、秋田大学とも連携してるよ。", "gold": "🎓 🏫 🌍 🤝 📚", "pred_original": "😊 🎉 📚 📖 🎉", "pred_with_penalty": "📚 😊 🇯🇵 📖 👏"}
+{"sample_id": 7, "text": "1〜3巻が倫子編で、4〜6巻が麻衣編って感じ！", "gold": "📖 📚 ✨ 🎉 👏", "pred_original": "🎓 🇯🇵 🎉 🔥 😊", "pred_with_penalty": "🎉 🔥 🎉 😊 👏"}
+{"sample_id": 8, "text": "これ、受賞理由からの引用なんだって～", "gold": "🎉 📚 ✨ 🤔 💡", "pred_original": "📚 🇯🇵 📚 🎉 🎉", "pred_with_penalty": "🇯🇵 🎉 😊 📚 🎓"}
+{"sample_id": 9, "text": "2013年のオフィシャルガイドブックで、好きなタレントとして大泉洋って書いてあるんだよね。", "gold": "😊 📚 🌟 📺 🇯🇵", "pred_original": "📚 👏 😊 📖 🎉", "pred_with_penalty": "😊 🎓 🇯🇵 👏 🎉"}
+{"sample_id": 10, "text": "各科候補生ってのは、海外の学校でそれなりのコースを卒業して、採用試験もパスして、海軍武官の任用委員の審査も通った人のことだよ〜", "gold": "🎓 📚 🇯🇵 💪 😊", "pred_original": "🎉 📚 😊 📚 📚", "pred_with_penalty": "📚 😊 🇯🇵 🎉 🔥"}
+{"sample_id": 11, "text": "自性分別ってのは、尋と伺のことで、分別の一種ってことね。", "gold": "🤔 🧠 📖 ✨ 🔍", "pred_original": "📖 😊 🎉 💼 🇯🇵", "pred_with_penalty": "😊 📚 🎉 👏 🇯🇵"}
+{"sample_id": 12, "text": "歴史ある旧・佐賀県立多久工業高校。  \n1962年（昭和37年）7月23日、佐賀県教委で、翌1963年（昭和38年）4月に「佐賀県立多久高校（仮称）」を設立するって話が決まったんだって！", "gold": "🏛️ 📚 📖 🇯🇵 🎓", "pred_original": "😊 🇯🇵 📚 😊 📚", "pred_with_penalty": "😊 📖 👏 🎉 🔍"}
+{"sample_id": 13, "text": "12月1日 - 電気事業法の主任技術者の資格とかに関する省令で、第1条第12項の学校認定を受けたよん（1975年5月改訂）。", "gold": "🎓 📚 🏛️ 📖 💼", "pred_original": "📖 😊 👏 📚 😊", "pred_with_penalty": "😊 📚 🇯🇵 📚 🎉"}
+{"sample_id": 14, "text": "「ミエナイチカラ 〜INVISIBLE ONE〜」は、俺初のアニメタイアップ曲なんだよな！", "gold": "🎵 🎉 🇯🇵 🔥 💪", "pred_original": "👏 🎤 🇯🇵 😊 📚", "pred_with_penalty": "🎉 😊 📚 🎉 🇯🇵"}
+{"sample_id": 15, "text": "『沈黙』って、遠藤周作が17世紀の日本の史実とか歴史文書をもとに書いた歴史小説なんだって～。", "gold": "📖 🏯 📜 😮 🤔", "pred_original": "😊 🎉 😊 😊 😊", "pred_with_penalty": "🎉 🏫 🇯🇵 📚 😊"}
+{"sample_id": 16, "text": "初のオールスターゲーム出場で、7月11日の第1戦（キャンドルスティック）の8回に代打で登場。マイク・フォーニレスからいきなり初打席本塁打！", "gold": "⚾ 🎉 👏 🔥 💥", "pred_original": "🇯🇵 📖 🎉 🇯🇵 😊", "pred_with_penalty": "😊 😊 🎓 📚 👏"}
+{"sample_id": 17, "text": "1987年にTom LaStrangeが作ったんだって。", "gold": "🤔 💡 📚", "pred_original": "📚 👏 🇯🇵 😊 👏", "pred_with_penalty": "🏫 🇯🇵 📚 😊 📚"}
+{"sample_id": 18, "text": "近代になって、大正天皇の病気が治ったお礼で廟が建てられたんだって。", "gold": "🏯 🙏 🇯🇵 📖 ✨", "pred_original": "👏 📚 😊 🇯🇵 🇯🇵", "pred_with_penalty": "🇯🇵 😊 🎉 📚 📖"}
+{"sample_id": 19, "text": "ヒルデによると、「昔はめっちゃ優しかった」んだって。", "gold": "😊 🤔 💬", "pred_original": "😊 📚 📚 😊 🇯🇵", "pred_with_penalty": "📚 📚 🇯🇵 🎉 🎓"}
+{"sample_id": 20, "text": "メロエに取って代わったヌビア王国の起源って、実はあんまりはっきりしてないんだよね。", "gold": "🏛️ 📖 🌍 🤔 🔍", "pred_original": "😊 🔥 🇯🇵 📚 😊", "pred_with_penalty": "🎉 😊 🇯🇵 👏 📚"}
