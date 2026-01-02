@@ -438,6 +438,7 @@ def generate_emoji(
     top_k: int = 50,
     top_p: float = 0.95,
     num_beams: int = 4,
+    repetition_penalty: float = 1.2,
     device: Optional[str] = None,
 ) -> str:
     """テキストから絵文字を生成する。
@@ -453,6 +454,7 @@ def generate_emoji(
         top_k: sampling時のtop-k
         top_p: sampling時のtop-p (nucleus sampling)
         num_beams: beam search時のビーム数
+        repetition_penalty: 繰り返しペナルティ（1.0=なし、1.2推奨）
         device: デバイス（None時は自動検出）
 
     Returns:
@@ -480,6 +482,7 @@ def generate_emoji(
                 temperature=temperature,
                 top_k=top_k,
                 top_p=top_p,
+                repetition_penalty=repetition_penalty,
             )
         else:
             outputs = model.generate(
@@ -487,6 +490,7 @@ def generate_emoji(
                 max_length=max_output_length,
                 num_beams=num_beams,
                 early_stopping=True,
+                repetition_penalty=repetition_penalty,
             )
 
     return tokenizer.decode(outputs[0], skip_special_tokens=True)

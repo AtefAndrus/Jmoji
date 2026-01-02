@@ -1,4 +1,4 @@
-# 進捗チェックリスト（更新: 2025-12-25 モデル推論機能追加）
+# 進捗チェックリスト（更新: 2026-01-03 LLM-as-a-Judge評価完了）
 
 ## 実装
 
@@ -84,6 +84,11 @@
   - [x] v4_focal_top50: Focal Loss + top50 → **Jaccard 0.182（精度最良）**、多様性14%
 - [ ] ベースラインvs学生モデルの自動評価レポート
 - [x] 人手評価フレームの整備 → 実施計画作成済み、詳細は [evaluation.md](evaluation.md) セクション3.5
+- [x] **LLM-as-a-Judge評価** → 完了、詳細は [LLM評価結果](details/llm_eval_results.md)
+  - Claude Opus 4.5 subagentによる自動評価（20サンプル×2モデル）
+  - v4_focal_top50 vs v4_top50 比較: **Jaccardと主観評価が逆転**
+  - Jaccard最良のfocal_top50（0.182）よりtop50（0.165）がLLM評価で優位（9勝6敗）
+  - 原因: Focal Lossによる過剰生成（😊😊😊😊😊）が自然さを低下
 - [ ] 人手評価の実施（評価サンプル抽出→フォーム作成→評価→集計）
 - [ ] エラー分析テンプレートでの事例収集
 
@@ -113,6 +118,7 @@
 - [experiment_plan_v3_improvements.md](details/experiment_plan_v3_improvements.md): 学習改善の実験計画（lr調整、Top-100制限、Focal Loss）
 - [experiment_v3_improvements.md](details/experiment_v3_improvements.md): 学習改善実験の結果（4実験完了、top100が最良）
 - [experiment_v4_results.md](details/experiment_v4_results.md): **v4データセット学習実験の結果**（Jaccard 0.12達成）
+- [llm_eval_results.md](details/llm_eval_results.md): **LLM-as-a-Judge評価結果**（Jaccardと主観評価の逆転を発見）
 - [dataset_generation_v3.md](details/dataset_generation_v3.md): データセット生成v3の品質改善と件数保証
 - [teacher_model_migration.md](details/teacher_model_migration.md): 教師モデル移行（Claude Haiku 4.5→Qwen3-235B-A22B）
 
@@ -134,6 +140,10 @@
   - 精度最良: v4_focal_top50（Jaccard 0.182）
   - 多様性最良: v4_focal_top100（多様性25%）
   - バランス型: v4_top50（Jaccard 0.165、多様性21%）
+- [x] **LLM-as-a-Judge評価** → **完了**（2026-01-03）
+  - v4_focal_top50 vs v4_top50 の比較評価
+  - **発見**: Jaccardと主観評価が逆転（top50がLLM評価で優位）
+  - 詳細は [llm_eval_results.md](details/llm_eval_results.md) 参照
 - [ ] **人手評価の実施** — 実施計画は [evaluation.md](evaluation.md) セクション3.5 参照
   - [x] Step 1: 評価サンプル抽出（scripts/prepare_human_eval.py作成済み、20件生成）
   - [x] Step 1.5: モデル推論機能追加（任意テキストから予測生成、50件への拡張）
@@ -144,7 +154,11 @@
   - [ ] Step 2: Googleフォーム作成
   - [ ] Step 3: 評価実施（1〜3名）
   - [ ] Step 4: 結果集計・分析
-- [ ] モデル選択ガイドライン作成 — 用途に応じた推奨モデル明確化
+- [x] **モデル改善**: repetition penalty導入（過剰生成対策） → **完了**（2026-01-03）
+  - `generate_emoji`関数に`repetition_penalty`パラメータ追加（デフォルト: 1.2）
+  - 過剰生成が60%→96%改善、gold絵文字（🏛️🔥🤔）の出現率向上
+  - **推奨設定**: v4_top50 + repetition_penalty=1.2
+- [x] モデル選択方針決定 — **単一モデル運用**: v4_top50 + repetition_penalty=1.2
 - [x] v4データセットをHuggingFace Hubにアップロード → **完了**（2025-12-23）
 
 ## ユーザータスク

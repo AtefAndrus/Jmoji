@@ -16,6 +16,8 @@ dependencies = [
     "torch>=2.0.0",
     "tqdm>=4.66.0",
     "transformers>=4.40.0",
+    "sentencepiece>=0.2.1",
+    "protobuf>=6.33.2",
 ]
 
 [dependency-groups]
@@ -43,4 +45,4 @@ exclude = ["notebooks/"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
-ignore = ["E501"]  # line too long
+ignore = ["E501"]             # line too long
