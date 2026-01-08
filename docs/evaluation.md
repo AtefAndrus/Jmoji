@@ -271,12 +271,12 @@ v4データセットでの学習実験完了後、以下の計画で人手評価
 
 | 項目 | 設定 |
 |------|------|
-| 件数 | 20〜50件 |
+| 件数 | 20件（パイロット完了）、50〜100件（拡大予定） |
 | 抽出元 | v4_top50テストセット または 任意のテキスト |
 | 抽出条件 | 両モデルで予測可能なサンプル |
 | 保存先 | `outputs/human_eval/samples.jsonl` |
 
-**現状**: モデル推論機能実装済み。50件の評価サンプル生成が可能。
+**現状**: パイロット評価（20件×1名）完了。結果は [human_eval_results.md](details/evaluations/human_eval_results.md) を参照。
 
 **実装済みの機能**:
 
@@ -358,7 +358,7 @@ Step 4: 結果集計
 
 Step 5: レポート作成
         └─ 定量評価との比較分析
-        └─ docs/details/human_eval_results.md
+        └─ docs/details/evaluations/human_eval_results.md
 ```
 
 **評価アプリの使い方**:
@@ -388,7 +388,7 @@ uv run scripts/analyze_human_eval.py \
 | `outputs/human_eval/samples.jsonl` | 評価サンプル（20件） |
 | `/home/keigo/jmoji-human-eval/responses/*.jsonl` | 評価者の回答（自動保存） |
 | `outputs/human_eval/results.json` | 集計結果 |
-| `docs/details/human_eval_results.md` | 分析レポート |
+| `docs/details/evaluations/human_eval_results.md` | 分析レポート |
 
 ## 4. 評価パイプライン
 

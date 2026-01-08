@@ -1,10 +1,10 @@
 # 実験計画: v3データセットでの学習改善
 
-> **注**: 本計画に基づく実験は完了しました。結果は [experiment_v3_improvements.md](experiment_v3_improvements.md) を参照してください。
+> **注**: 本計画に基づく実験は完了しました。結果は [v3_improvements.md](v3_improvements.md) を参照してください。
 
 ## 概要
 
-本ドキュメントは、v3データセット（5,000件）での学習結果（[experiment_v3_5000samples.md](experiment_v3_5000samples.md)）を受けて、Soft Mode Collapseを解消するための実験計画を記述する。
+本ドキュメントは、v3データセット（5,000件）での学習結果（[v3_5000samples.md](v3_5000samples.md)）を受けて、Soft Mode Collapseを解消するための実験計画を記述する。
 
 **目標**: Top5絵文字への偏りを解消し、Jaccard > 0.10を達成する
 
@@ -245,7 +245,7 @@ Exp1 (lr1e-4)
 
 ## 関連ドキュメント
 
-- [experiment_v3_improvements.md](experiment_v3_improvements.md): **本計画の実験結果**
-- [experiment_v3_5000samples.md](experiment_v3_5000samples.md): v3ベースラインの実験結果
-- [experiment_v1_1000samples.md](experiment_v1_1000samples.md): v1での実験（完全mode collapse）
-- [dataset_generation_v3.md](dataset_generation_v3.md): v3データセットの品質改善
+- [v3_improvements.md](v3_improvements.md): **本計画の実験結果**
+- [v3_5000samples.md](v3_5000samples.md): v3ベースラインの実験結果
+- [v1_1000samples.md](v1_1000samples.md): v1での実験（完全mode collapse）
+- [generation_v3.md](../datasets/generation_v3.md): v3データセットの品質改善

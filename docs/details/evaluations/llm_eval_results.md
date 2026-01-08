@@ -310,6 +310,6 @@ penalty適用前後でLLM評価を実施し、効果を定量的に確認。
 
 ## 関連ドキュメント
 
-- [experiment_v4_results.md](experiment_v4_results.md): v4データセット学習実験の結果
+- [v4_results.md](../experiments/v4_results.md): v4データセット学習実験の結果
 - [evaluation.md](../evaluation.md): 評価方法の詳細
 - [status.md](../status.md): プロジェクト進捗

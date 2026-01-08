@@ -50,7 +50,7 @@ sys.path.append("/content/Jmoji")
 
 ## 2. データパイプライン
 
-> **詳細ドキュメント**: データセット生成の品質改善については [dataset_generation_v3.md](details/dataset_generation_v3.md) を参照。
+> **詳細ドキュメント**: データセット生成の品質改善については [dataset_generation_v3.md](details/datasets/generation_v3.md) を参照。
 
 ### 2.1 Wikipedia データ取得
 
@@ -190,7 +190,11 @@ data:
 
 ## 3. 教師LLM呼び出し
 
-> **Note**: v4以降はQwen3-235B-A22Bを使用。詳細は [teacher_model_migration.md](details/teacher_model_migration.md) を参照。
+> **教師モデルの履歴**
+> - **v1〜v3**: Claude Haiku 4.5（OpenRouter経由）
+> - **v4以降**: Qwen3-235B-A22B（OpenRouter経由）
+>
+> 移行理由: コスト削減（約1/3）と品質の維持。詳細は [teacher_model_migration.md](details/teacher_model_migration.md) を参照。
 
 ### 3.1 OpenRouter クライアント
 
@@ -426,8 +430,10 @@ Qwen3-235B-A22BはClaude Haiku 4.5の約1/3のコスト。
 
 ### 3.7 コンテンツポリシー拒否の検出
 
-OpenRouter経由でClaudeを使用する場合、NSFWコンテンツはコンテンツモデレーションにより拒否される。
+OpenRouter経由でLLMを使用する場合、NSFWコンテンツはコンテンツモデレーションにより拒否される場合がある。
 エラーを検出してログに記録し、拒否率を監視する。
+
+> **Note**: Claude（v1〜v3）は厳格なコンテンツモデレーションを持つ。Qwen3（v4以降）は比較的緩いが、プロバイダによっては制限がある場合がある。
 
 ```python
 import httpx

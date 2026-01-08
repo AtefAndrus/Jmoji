@@ -302,6 +302,6 @@ outputs/experiments/
 
 ## 関連ドキュメント
 
-- [experiment_v3_improvements.md](experiment_v3_improvements.md): v3での学習改善実験
-- [teacher_model_migration.md](teacher_model_migration.md): 教師モデル移行（Qwen3への変更）
-- [dataset_generation_v3.md](dataset_generation_v3.md): データセット生成の品質改善
+- [v3_improvements.md](v3_improvements.md): v3での学習改善実験
+- [teacher_model_migration.md](../teacher_model_migration.md): 教師モデル移行（Qwen3への変更）
+- [generation_v3.md](../datasets/generation_v3.md): データセット生成の品質改善

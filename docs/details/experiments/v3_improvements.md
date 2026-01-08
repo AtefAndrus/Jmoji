@@ -6,7 +6,7 @@
 
 **実験期間**: 2025-12-12
 **実験環境**: Google Colab Pro（NVIDIA A100-SXM4-40GB）
-**ベースライン**: [experiment_v3_5000samples.md](experiment_v3_5000samples.md)（Jaccard 0.045）
+**ベースライン**: [v3_5000samples.md](v3_5000samples.md)（Jaccard 0.045）
 
 ---
 
@@ -238,7 +238,7 @@ outputs/experiments/
 
 ## 関連ドキュメント
 
-- [experiment_v3_5000samples.md](experiment_v3_5000samples.md): v3ベースラインの実験結果
-- [experiment_plan_v3_improvements.md](experiment_plan_v3_improvements.md): 本実験の計画書
-- [experiment_v1_1000samples.md](experiment_v1_1000samples.md): v1での実験（完全mode collapse）
-- [dataset_generation_v3.md](dataset_generation_v3.md): v3データセットの品質改善
+- [v3_5000samples.md](v3_5000samples.md): v3ベースラインの実験結果
+- [plan_v3_improvements.md](plan_v3_improvements.md): 本実験の計画書
+- [v1_1000samples.md](v1_1000samples.md): v1での実験（完全mode collapse）
+- [generation_v3.md](../datasets/generation_v3.md): v3データセットの品質改善

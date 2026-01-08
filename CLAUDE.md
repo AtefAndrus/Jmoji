@@ -41,10 +41,13 @@ Jmoji/
 │   ├── models/       # モデルチェックポイント（.gitignore）
 │   └── logs/         # 一時ログ（.gitignore）
 ├── scripts/          # CLIスクリプト
-│   ├── generate_dataset.py    # データセット生成
-│   ├── train.py               # モデル学習
-│   ├── generate_predictions.py  # モデル推論（Hub連携）
-│   └── prepare_human_eval.py    # 人手評価サンプル準備
+│   ├── generate_dataset.py              # データセット生成
+│   ├── train.py                         # モデル学習
+│   ├── generate_predictions.py          # モデル推論（Hub連携）
+│   ├── generate_predictions_with_penalty.py  # Repetition penalty適用版
+│   ├── test_repetition_penalty.py       # Penalty効果テスト
+│   ├── prepare_human_eval.py            # 人手評価サンプル準備
+│   └── analyze_human_eval.py            # 人手評価結果分析
 ├── src/              # ソースコード
 │   ├── config.py              # 設定ロード
 │   ├── data/                  # データ処理
@@ -94,6 +97,23 @@ uv run scripts/prepare_human_eval.py \
     --model-b-repo AtefAndrus/jmoji-t5-v4_top50_20251224 \
     --input-file data/test.jsonl \
     --max-samples 50
+
+# Repetition penalty適用版の予測生成
+uv run scripts/generate_predictions_with_penalty.py \
+    --model AtefAndrus/jmoji-t5-v4_top50_20251224 \
+    --penalty 1.2 \
+    --input texts.txt \
+    --output predictions_with_penalty.jsonl
+
+# Repetition penaltyの効果テスト
+uv run scripts/test_repetition_penalty.py \
+    --model top50 \
+    --penalties 1.0 1.1 1.2 1.3
+
+# 人手評価結果の集計・分析
+uv run scripts/analyze_human_eval.py \
+    --space-id AtefAndrus/jmoji-human-eval \
+    --output outputs/human_eval/results.json
 ```
 
 ### テスト・リント
@@ -153,8 +173,14 @@ commit時に以下が自動実行される:
 - `EmojiDataset` クラス
 - `TrainConfig` データクラス（学習設定）
 - `build_trainer` 関数（EarlyStoppingCallback対応）
+- `build_focal_loss_trainer` 関数（Focal Loss対応版）
+- `FocalLossTrainer` クラス（クラス不均衡対策）
 - `generate_emoji` 関数（推論）
+  - `repetition_penalty`: 繰り返し抑制（デフォルト1.2）
+  - `use_sampling`: サンプリング有効化（デフォルトTrue）
+  - `temperature`, `top_k`, `top_p`: サンプリングパラメータ
 - `evaluate_model` 関数（評価指標計算）
+- `ExperimentLoggingCallback` クラス（学習ログCSV出力）
 
 ## 環境変数
 
@@ -172,13 +198,19 @@ OPENROUTER_API_KEY=your_api_key_here
 - 絵文字は Emoji 16.0 準拠、肌色バリアントは基本絵文字に統合
 - **絵文字バランス**: ✨（キラキラ）が偏りやすくmode collapseの原因となるため、プロンプトで使用を禁止している
 
-## Colab学習
+## ノートブック
+
+### Colab学習
 
 `notebooks/train_t5_colab.ipynb` でワンクリック学習が可能。READMEの「Open in Colab」バッジから起動できる。
 
 ノートブックは `notebooks/train_t5_colab.py`（percent format）から jupytext で自動生成される。
 
-## Colab推論
+### ローカル学習
+
+`notebooks/train_t5.ipynb` でローカルマシン（GPU環境）での学習が可能。Colab版と同等の機能を持つ。
+
+### 推論
 
 `notebooks/inference.ipynb` でHuggingFace Hubから学習済みモデルをロードして推論が可能。
 
@@ -200,7 +232,7 @@ OPENROUTER_API_KEY=your_api_key_here
 
 **理由**: 同じseedでは同じ文が同じ順番で出てくるため、データセット間の独立性が低下する。
 
-詳細は [dataset_generation_v3.md](docs/details/dataset_generation_v3.md) を参照。
+詳細は [dataset_generation_v3.md](docs/details/datasets/generation_v3.md) を参照。
 
 ### 実験ログ管理
 
@@ -278,14 +310,34 @@ dataset = load_dataset("AtefAndrus/jmoji-dataset", data_files="data/v4.jsonl", s
 
 ### 詳細ドキュメント（`docs/details/`）
 
+#### 実験記録（`experiments/`）
+
 | ファイル | 内容 |
 |----------|------|
-| [experiment_v1_1000samples.md](docs/details/experiment_v1_1000samples.md) | 実験記録v1。1,000件データセットでの学習結果。✨への偏り（18.6%）によるmode collapse発生と対策検討 |
-| [experiment_v3_5000samples.md](docs/details/experiment_v3_5000samples.md) | 実験記録v3。5,000件データセットでの学習結果。soft mode collapse（Top5絵文字への偏り）発生と次ステップ |
-| [experiment_plan_v3_improvements.md](docs/details/experiment_plan_v3_improvements.md) | 学習改善の実験計画。学習率調整、Top-100絵文字制限、Focal Lossの4実験を計画 |
-| [experiment_v3_improvements.md](docs/details/experiment_v3_improvements.md) | **学習改善実験の結果**。4実験完了、top100が最良（Jaccard 0.058）。データ密度向上が次の課題 |
-| [dataset_generation_v3.md](docs/details/dataset_generation_v3.md) | データセット生成v3の品質改善。事前フィルタ、SNS絵文字除去、件数保証の実装詳細 |
-| [teacher_model_migration.md](docs/details/teacher_model_migration.md) | 教師モデル移行。Claude Haiku 4.5→Qwen3-235B-A22Bへの変更理由・コスト比較・設定 |
+| [v1_1000samples.md](docs/details/experiments/v1_1000samples.md) | 実験記録v1。1,000件データセットでの学習結果。mode collapse発生と対策検討 |
+| [v3_5000samples.md](docs/details/experiments/v3_5000samples.md) | 実験記録v3。5,000件データセットでの学習結果。soft mode collapse発生 |
+| [plan_v3_improvements.md](docs/details/experiments/plan_v3_improvements.md) | 学習改善の実験計画。学習率調整、Top-100制限、Focal Loss |
+| [v3_improvements.md](docs/details/experiments/v3_improvements.md) | **学習改善実験の結果**。4実験完了、top100が最良（Jaccard 0.058） |
+| [v4_results.md](docs/details/experiments/v4_results.md) | **v4データセット実験結果**。focal_top50が最良（Jaccard 0.182） |
+
+#### データセット（`datasets/`）
+
+| ファイル | 内容 |
+|----------|------|
+| [generation_v3.md](docs/details/datasets/generation_v3.md) | データセット生成v3の品質改善。事前フィルタ、SNS絵文字除去、件数保証 |
+
+#### 評価結果（`evaluations/`）
+
+| ファイル | 内容 |
+|----------|------|
+| [llm_eval_results.md](docs/details/evaluations/llm_eval_results.md) | LLM-as-a-Judge評価結果。repetition penalty導入の効果検証 |
+| [human_eval_results.md](docs/details/evaluations/human_eval_results.md) | 人手評価パイロット結果（20件）。LLM評価との整合性分析 |
+
+#### その他
+
+| ファイル | 内容 |
+|----------|------|
+| [teacher_model_migration.md](docs/details/teacher_model_migration.md) | 教師モデル移行。Claude Haiku 4.5→Qwen3-235B-A22Bへの変更理由・コスト比較 |
 
 ## 進捗管理
 

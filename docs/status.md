@@ -61,7 +61,7 @@
 - [x] `datasets` でのWikipediaダウンロードを組み込む（ストリーミング・キャッシュ利用）
 - [x] 小規模（〜1k）疑似対訳の生成と共有
 - [x] 中規模（5k）疑似対訳の生成（✨禁止プロンプト適用）→ dataset_v2.jsonl
-- [x] 中規模（5k）品質改善版の生成（事前フィルタ・件数保証適用）→ dataset_v3.jsonl、詳細は [dataset_generation_v3.md](details/dataset_generation_v3.md)
+- [x] 中規模（5k）品質改善版の生成（事前フィルタ・件数保証適用）→ dataset_v3.jsonl、詳細は [dataset_generation_v3.md](details/datasets/generation_v3.md)
 - [x] データセットのHuggingFace Hub移行（`AtefAndrus/jmoji-dataset`）
 - [x] **v4データセット生成（20k件）** → dataset_v4.jsonl、Qwen3-235B-A22B使用、フィルタ除外1,309件
 - [x] **v4データセットをHuggingFace Hubにアップロード**（2025-12-23）
@@ -69,14 +69,14 @@
 
 ## モデル/評価マイルストーン
 
-- [x] 小規模T5学習のスモーク（数エポック）→ mode collapse発生、詳細は [実験記録v1](details/experiment_v1_1000samples.md)
-- [x] 中規模（5k）データでのT5学習 → soft mode collapse発生、詳細は [実験記録v3](details/experiment_v3_5000samples.md)
-- [x] **学習改善実験** → 完了、詳細は [実験結果](details/experiment_v3_improvements.md)
+- [x] 小規模T5学習のスモーク（数エポック）→ mode collapse発生、詳細は [実験記録v1](details/experiments/v1_1000samples.md)
+- [x] 中規模（5k）データでのT5学習 → soft mode collapse発生、詳細は [実験記録v3](details/experiments/v3_5000samples.md)
+- [x] **学習改善実験** → 完了、詳細は [実験結果](details/experiments/v3_improvements.md)
   - [x] Exp1: 学習率調整 (v3_lr1e-4) → Jaccard 0.048（+7%）
   - [x] Exp2: Top-100絵文字制限 (v3_top100) → **Jaccard 0.058（+29%、最良）**
   - [x] Exp3: 組み合わせ (v3_lr1e-4_top100) → 失敗（学習率低すぎ）
   - [x] Exp4: Focal Loss + Top-100 (v3_focal_top100) → Jaccard 0.058、初Exact Match
-- [x] **v4データセット学習実験** → 完了、詳細は [実験結果](details/experiment_v4_results.md)
+- [x] **v4データセット学習実験** → 完了、詳細は [実験結果](details/experiments/v4_results.md)
   - [x] v4_lr1e-4: 20k件全件使用 → Jaccard 0.066（+14% vs v3_top100）
   - [x] v4_top100: top100フィルタ適用 → Jaccard 0.120（+106% vs v3_top100、目標達成）
   - [x] v4_focal_top100: Focal Loss適用 → Jaccard 0.115、**多様性25%（多様性最良）**
@@ -84,7 +84,7 @@
   - [x] v4_focal_top50: Focal Loss + top50 → **Jaccard 0.182（精度最良）**、多様性14%
 - [ ] ベースラインvs学生モデルの自動評価レポート
 - [x] 人手評価フレームの整備 → 実施計画作成済み、詳細は [evaluation.md](evaluation.md) セクション3.5
-- [x] **LLM-as-a-Judge評価** → 完了、詳細は [LLM評価結果](details/llm_eval_results.md)
+- [x] **LLM-as-a-Judge評価** → 完了、詳細は [LLM評価結果](details/evaluations/llm_eval_results.md)
   - Claude Opus 4.5 subagentによる自動評価（20サンプル×2モデル）
   - v4_focal_top50 vs v4_top50 比較: **Jaccardと主観評価が逆転**
   - Jaccard最良のfocal_top50（0.182）よりtop50（0.165）がLLM評価で優位（9勝6敗）
@@ -113,14 +113,22 @@
 
 ## 実験記録・技術ドキュメント
 
-- [experiment_v1_1000samples.md](details/experiment_v1_1000samples.md): 1,000件データセットでの学習結果（mode collapse発生）
-- [experiment_v3_5000samples.md](details/experiment_v3_5000samples.md): 5,000件データセットでの学習結果（soft mode collapse発生）
-- [experiment_plan_v3_improvements.md](details/experiment_plan_v3_improvements.md): 学習改善の実験計画（lr調整、Top-100制限、Focal Loss）
-- [experiment_v3_improvements.md](details/experiment_v3_improvements.md): 学習改善実験の結果（4実験完了、top100が最良）
-- [experiment_v4_results.md](details/experiment_v4_results.md): **v4データセット学習実験の結果**（Jaccard 0.12達成）
-- [llm_eval_results.md](details/llm_eval_results.md): **LLM-as-a-Judge評価結果**（Jaccardと主観評価の逆転を発見）
-- [human_eval_results.md](details/human_eval_results.md): **人手評価結果**（パイロット20件×1名）
-- [dataset_generation_v3.md](details/dataset_generation_v3.md): データセット生成v3の品質改善と件数保証
+### 実験記録（`details/experiments/`）
+
+- [v1_1000samples.md](details/experiments/v1_1000samples.md): 1,000件データセットでの学習結果（mode collapse発生）
+- [v3_5000samples.md](details/experiments/v3_5000samples.md): 5,000件データセットでの学習結果（soft mode collapse発生）
+- [plan_v3_improvements.md](details/experiments/plan_v3_improvements.md): 学習改善の実験計画（lr調整、Top-100制限、Focal Loss）
+- [v3_improvements.md](details/experiments/v3_improvements.md): 学習改善実験の結果（4実験完了、top100が最良）
+- [v4_results.md](details/experiments/v4_results.md): **v4データセット学習実験の結果**（Jaccard 0.12達成）
+
+### 評価結果（`details/evaluations/`）
+
+- [llm_eval_results.md](details/evaluations/llm_eval_results.md): **LLM-as-a-Judge評価結果**（Jaccardと主観評価の逆転を発見）
+- [human_eval_results.md](details/evaluations/human_eval_results.md): **人手評価結果**（パイロット20件×1名）
+
+### データセット・その他
+
+- [generation_v3.md](details/datasets/generation_v3.md): データセット生成v3の品質改善と件数保証
 - [teacher_model_migration.md](details/teacher_model_migration.md): 教師モデル移行（Claude Haiku 4.5→Qwen3-235B-A22B）
 
 ## 教師モデル移行
@@ -144,8 +152,8 @@
 - [x] **LLM-as-a-Judge評価** → **完了**（2026-01-03）
   - v4_focal_top50 vs v4_top50 の比較評価
   - **発見**: Jaccardと主観評価が逆転（top50がLLM評価で優位）
-  - 詳細は [llm_eval_results.md](details/llm_eval_results.md) 参照
-- [x] **人手評価の実施** → **パイロット完了**（2026-01-08）、詳細は [human_eval_results.md](details/human_eval_results.md)
+  - 詳細は [llm_eval_results.md](details/evaluations/llm_eval_results.md) 参照
+- [x] **人手評価の実施** → **パイロット完了**（2026-01-08）、詳細は [human_eval_results.md](details/evaluations/human_eval_results.md)
   - [x] Step 1: 評価サンプル抽出（scripts/prepare_human_eval.py作成済み、20件生成）
   - [x] Step 1.5: モデル推論機能追加（任意テキストから予測生成、50件への拡張）
     - `src/models/t5_trainer.py` に `load_model_from_hub()` 追加

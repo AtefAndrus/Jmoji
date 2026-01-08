@@ -155,5 +155,5 @@ Shisa.AI推奨設定（temp=0.2, min_p=0.1）を採用:
 
 ## 関連ドキュメント
 
-- [dataset_generation_v3.md](dataset_generation_v3.md): v3データセット生成の詳細
-- [experiment_v3_improvements.md](experiment_v3_improvements.md): 学習改善実験の結果
+- [generation_v3.md](datasets/generation_v3.md): v3データセット生成の詳細
+- [v3_improvements.md](experiments/v3_improvements.md): 学習改善実験の結果

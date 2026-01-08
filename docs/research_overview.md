@@ -90,7 +90,7 @@ SNS風テキスト
 2. **SNS絵文字除去**: Claude出力から絵文字を除去し、T5入力をクリーンに
 3. **件数保証**: 目標サンプル数に達するまで生成を継続
 
-詳細は [dataset_generation_v3.md](details/dataset_generation_v3.md) を参照。
+詳細は [dataset_generation_v3.md](details/datasets/generation_v3.md) を参照。
 
 ### 4.2 モデル構成
 
@@ -143,27 +143,25 @@ J(A, B) = |A ∩ B| / |A ∪ B|
   - 自然さ（0〜4段階）
   - 誤解を招く可能性（Yes/No）
 
-## 6. スケジュール
+## 6. 進捗状況
 
-### 中間発表（12/5）まで
+詳細な進捗管理は [status.md](status.md) を参照。
 
-- [x] タスク仕様の確定
-- [x] 教師LLMプロンプトの設計・試行
-- [x] 小規模データセット（〜1,000ペア）構築
-- [x] T5ベースラインの動作確認 → soft mode collapse発生、詳細は [実験記録v3](details/experiment_v3_5000samples.md)
+### 完了済み
 
-### 年内
+- タスク仕様の確定
+- 教師LLMプロンプトの設計・試行
+- データセット構築（v1〜v4、最大20,000件）
+- T5モデル学習・チューニング
+- 自動評価指標の整備（Jaccard、F1等）
+- LLM-as-a-Judge評価
+- 人手評価パイロット（20件）
 
-- [ ] データセット拡張（1万〜数万ペア）
-- [ ] T5モデルの本格学習・チューニング
-- [ ] 絵文字頻度分布の分析
+### 進行中
 
-### 年明け〜最終発表
-
-- [ ] 自動評価指標の整備
-- [ ] 人手評価の実施
-- [ ] エラー分析
-- [ ] 論文・発表資料作成
+- 人手評価の拡大（50〜100件）
+- エラー分析
+- 論文・発表資料作成
 
 ## 7. 先行研究との差異
 
@@ -179,8 +177,8 @@ J(A, B) = |A ∩ B| / |A ∪ B|
 2. **定量評価の難しさ**: 正解が一意でない → 複数指標 + 人手評価で対応
 3. **教師LLMのノイズ**: 無関係な絵文字の混入 → 目視確認 + フィルタリング
 4. **Mode Collapse**: 頻出絵文字への偏り → データ側（✨禁止）とモデル側（Focal Loss等）の両面対策が必要。詳細は実験記録を参照:
-   - [v1実験](details/experiment_v1_1000samples.md): 完全mode collapse（✨のみ出力）
-   - [v3実験](details/experiment_v3_5000samples.md): soft mode collapse（Top5絵文字に偏り）
+   - [v1実験](details/experiments/v1_1000samples.md): 完全mode collapse（✨のみ出力）
+   - [v3実験](details/experiments/v3_5000samples.md): soft mode collapse（Top5絵文字に偏り）
 
 ## 参考文献
 
