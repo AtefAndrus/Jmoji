@@ -47,14 +47,11 @@ cp .env.example .env
 Jmoji/
 ├── configs/          # 設定ファイル（YAML）
 │   └── default.yaml  # デフォルト設定
-├── data/             # データセット
-│   └── outputs/      # 生成されたデータセット
+├── data/             # データセット（v1〜v4）
 ├── docs/             # ドキュメント
 ├── notebooks/        # Jupyter notebooks
 ├── outputs/          # 学習済みモデル・ログ・評価結果
 ├── scripts/          # CLIスクリプト
-│   ├── generate_dataset.py  # データセット生成
-│   └── train.py             # モデル学習
 ├── src/              # ソースコード
 │   ├── config.py            # 設定ロード
 │   ├── data/                # データ処理
@@ -118,6 +115,41 @@ uv run scripts/train.py --config configs/default.yaml
 
 未設定の場合はスキップされます（エラーにはなりません）。
 
+### モデル推論
+
+HuggingFace Hubから学習済みモデルをロードして推論:
+
+```bash
+# 基本的な使用方法
+uv run scripts/generate_predictions.py \
+    --model AtefAndrus/jmoji-t5-v4_top50_20251224 \
+    --input texts.txt \
+    --output predictions.jsonl
+
+# Repetition penalty適用（推奨）
+uv run scripts/generate_predictions_with_penalty.py \
+    --model AtefAndrus/jmoji-t5-v4_top50_20251224 \
+    --penalty 1.2 \
+    --input texts.txt \
+    --output predictions.jsonl
+```
+
+### 人手評価
+
+```bash
+# 評価サンプルの準備（50件）
+uv run scripts/prepare_human_eval.py \
+    --model-a-repo AtefAndrus/jmoji-t5-v4_focal_top50_20251224 \
+    --model-b-repo AtefAndrus/jmoji-t5-v4_top50_20251224 \
+    --input-file data/test.jsonl \
+    --max-samples 50
+
+# 評価結果の集計・分析
+uv run scripts/analyze_human_eval.py \
+    --space-id AtefAndrus/jmoji-human-eval \
+    --output outputs/human_eval/results.json
+```
+
 ### 開発コマンド
 
 ```bash
@@ -139,11 +171,17 @@ uv run pre-commit run --all-files
 
 データセットはHuggingFace Hubで管理しています: [AtefAndrus/jmoji-dataset](https://huggingface.co/datasets/AtefAndrus/jmoji-dataset)
 
+| バージョン | 件数 | 教師モデル | 備考 |
+|-----------|------|-----------|------|
+| v4 | 20,000 | Qwen3-235B-A22B | 最新・推奨 |
+| v3 | 5,000 | Claude Haiku 4.5 | 品質改善版 |
+| v1-v2 | 1,000-5,000 | Claude Haiku 4.5 | 初期版 |
+
 ```python
 from datasets import load_dataset
 
-# 最新バージョン（v3）をロード
-dataset = load_dataset("AtefAndrus/jmoji-dataset", data_files="data/v3.jsonl", split="train")
+# 最新バージョン（v4）をロード
+dataset = load_dataset("AtefAndrus/jmoji-dataset", data_files="data/v4.jsonl", split="train")
 ```
 
 ### データセットのアップロード
@@ -155,12 +193,70 @@ export HF_TOKEN="hf_..."
 uv run scripts/upload_dataset_to_hf.py --versions v4
 ```
 
+## 公開モデル
+
+学習済みモデルはHuggingFace Hubで公開しています:
+
+| モデル | Jaccard | 多様性 | 用途 |
+|--------|---------|--------|------|
+| [jmoji-t5-v4_top50](https://huggingface.co/AtefAndrus/jmoji-t5-v4_top50_20251224) | 0.165 | 21% | **推奨（バランス型）** |
+| [jmoji-t5-v4_focal_top50](https://huggingface.co/AtefAndrus/jmoji-t5-v4_focal_top50_20251224) | 0.182 | 14% | 精度重視 |
+
+**推奨設定**: `v4_top50` + `repetition_penalty=1.2`
+
+- repetition penaltyにより過剰生成（😊😊😊）を抑制
+- 自然さと精度のバランスが良好
+
+## 実験結果
+
+v4データセット（20,000件）での学習実験結果:
+
+| 実験 | データ件数 | Jaccard | 多様性 |
+|------|-----------|---------|--------|
+| v4_focal_top50 | 1,337 | **0.182** | 14% |
+| v4_top50 | 1,337 | 0.165 | 21% |
+| v4_focal_top100 | 4,237 | 0.115 | **25%** |
+| v4_top100 | 4,237 | 0.120 | 21% |
+
+詳細は [v4実験結果](docs/details/experiments/v4_results.md) を参照。
+
+## 評価結果
+
+### LLM-as-a-Judge評価
+
+Claude Opus 4.5による自動評価（20サンプル）:
+
+- v4_top50がv4_focal_top50より優位（9勝6敗）
+- Focal Lossによる過剰生成が自然さを低下
+
+詳細は [LLM評価結果](docs/details/evaluations/llm_eval_results.md) を参照。
+
+### 人手評価（パイロット）
+
+パイロット評価（20サンプル、1名）:
+
+| モデル | 意味的一致度 | 自然さ |
+|--------|-------------|--------|
+| 教師（Gold） | 2.30/4.0 | 2.15/4.0 |
+| focal_top50 | 1.00/4.0 | 1.30/4.0 |
+| top50 | 0.90/4.0 | 1.25/4.0 |
+
+詳細は [人手評価結果](docs/details/evaluations/human_eval_results.md) を参照。
+
 ## ドキュメント
+
+### メインドキュメント
 
 - [研究概要](docs/research_overview.md)
 - [実装ガイド](docs/implemention_guide.md)
 - [評価方法](docs/evaluation.md)
 - [進捗チェックリスト](docs/status.md)
+
+### 詳細ドキュメント
+
+- 実験記録: [v4結果](docs/details/experiments/v4_results.md) / [v3改善](docs/details/experiments/v3_improvements.md)
+- 評価結果: [LLM評価](docs/details/evaluations/llm_eval_results.md) / [人手評価](docs/details/evaluations/human_eval_results.md)
+- その他: [教師モデル移行](docs/details/teacher_model_migration.md)
 
 ## 開発環境
 
