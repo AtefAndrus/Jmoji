@@ -1,0 +1,53 @@
+{
+  "total_responses": 20,
+  "total_evaluators": 1,
+  "average_scores": {
+    "gold": {
+      "semantic_mean": 2.3,
+      "semantic_std": 0.5567764362830021,
+      "semantic_n": 20,
+      "naturalness_mean": 2.15,
+      "naturalness_std": 0.3570714214271425,
+      "naturalness_n": 20,
+      "misleading_mean": 0.0,
+      "misleading_std": 0.0,
+      "misleading_n": 20
+    },
+    "model_a": {
+      "semantic_mean": 1.0,
+      "semantic_std": 0.7071067811865476,
+      "semantic_n": 20,
+      "naturalness_mean": 1.3,
+      "naturalness_std": 0.5567764362830021,
+      "naturalness_n": 20,
+      "misleading_mean": 0.1,
+      "misleading_std": 0.30000000000000004,
+      "misleading_n": 20
+    },
+    "model_b": {
+      "semantic_mean": 0.9,
+      "semantic_std": 0.43588989435406733,
+      "semantic_n": 20,
+      "naturalness_mean": 1.25,
+      "naturalness_std": 0.4330127018922193,
+      "naturalness_n": 20,
+      "misleading_mean": 0.05,
+      "misleading_std": 0.21794494717703364,
+      "misleading_n": 20
+    }
+  },
+  "preference_distribution": {
+    "model_a": 6,
+    "equal": 11,
+    "model_b": 3
+  },
+  "cohen_kappa": {
+    "semantic_gold": null,
+    "semantic_model_a": null,
+    "semantic_model_b": null,
+    "naturalness_gold": null,
+    "naturalness_model_a": null,
+    "naturalness_model_b": null,
+    "preference": null
+  }
+}

@@ -340,20 +340,20 @@ Googleフォームを使用（集計自動化のため）。
 
 ```text
 Step 1: 評価サンプル抽出
-        └─ scripts/prepare_human_eval.py（新規作成）
+        └─ scripts/prepare_human_eval.py
         └─ 出力: outputs/human_eval/samples.jsonl
 
-Step 2: Googleフォーム作成
-        └─ テンプレートから作成
-        └─ サンプルをフォームに転記
+Step 2: 評価アプリ作成（完了）
+        └─ /home/keigo/jmoji-human-eval/ に Gradio アプリを作成
+        └─ HuggingFace Spaces にデプロイ
 
 Step 3: 評価実施
-        └─ 評価者にフォームURL共有
-        └─ 回答収集（1〜2日）
+        └─ 評価者に Space URL を共有
+        └─ URL: https://huggingface.co/spaces/AtefAndrus/jmoji-human-eval
+        └─ 回答は自動的に responses/ に保存
 
 Step 4: 結果集計
-        └─ Googleスプレッドシートからエクスポート
-        └─ scripts/analyze_human_eval.py（新規作成）
+        └─ scripts/analyze_human_eval.py
         └─ 出力: outputs/human_eval/results.json
 
 Step 5: レポート作成
@@ -361,12 +361,32 @@ Step 5: レポート作成
         └─ docs/details/human_eval_results.md
 ```
 
+**評価アプリの使い方**:
+
+```bash
+# ローカルで動作確認
+cd /home/keigo/jmoji-human-eval
+pip install -r requirements.txt
+python app.py
+
+# HuggingFace Spaces にデプロイ
+huggingface-cli login
+git remote add origin https://huggingface.co/spaces/AtefAndrus/jmoji-human-eval
+git add . && git commit -m "Initial deployment" && git push -u origin main
+
+# 結果集計（Jmojiリポジトリから実行）
+uv run scripts/analyze_human_eval.py \
+    --space-id AtefAndrus/jmoji-human-eval \
+    --output outputs/human_eval/results.json \
+    --report outputs/human_eval/report.md
+```
+
 #### 3.5.6 成果物
 
 | ファイル | 内容 |
 |----------|------|
-| `outputs/human_eval/samples.jsonl` | 評価サンプル（50件） |
-| `outputs/human_eval/responses.csv` | 評価者の回答（Googleフォームからエクスポート） |
+| `outputs/human_eval/samples.jsonl` | 評価サンプル（20件） |
+| `/home/keigo/jmoji-human-eval/responses/*.jsonl` | 評価者の回答（自動保存） |
 | `outputs/human_eval/results.json` | 集計結果 |
 | `docs/details/human_eval_results.md` | 分析レポート |
 

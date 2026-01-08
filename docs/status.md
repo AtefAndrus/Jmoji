@@ -1,4 +1,4 @@
-# 進捗チェックリスト（更新: 2026-01-03 repetition penalty効果検証完了）
+# 進捗チェックリスト（更新: 2026-01-08 人手評価パイロット完了）
 
 ## 実装
 
@@ -119,6 +119,7 @@
 - [experiment_v3_improvements.md](details/experiment_v3_improvements.md): 学習改善実験の結果（4実験完了、top100が最良）
 - [experiment_v4_results.md](details/experiment_v4_results.md): **v4データセット学習実験の結果**（Jaccard 0.12達成）
 - [llm_eval_results.md](details/llm_eval_results.md): **LLM-as-a-Judge評価結果**（Jaccardと主観評価の逆転を発見）
+- [human_eval_results.md](details/human_eval_results.md): **人手評価結果**（パイロット20件×1名）
 - [dataset_generation_v3.md](details/dataset_generation_v3.md): データセット生成v3の品質改善と件数保証
 - [teacher_model_migration.md](details/teacher_model_migration.md): 教師モデル移行（Claude Haiku 4.5→Qwen3-235B-A22B）
 
@@ -144,16 +145,21 @@
   - v4_focal_top50 vs v4_top50 の比較評価
   - **発見**: Jaccardと主観評価が逆転（top50がLLM評価で優位）
   - 詳細は [llm_eval_results.md](details/llm_eval_results.md) 参照
-- [ ] **人手評価の実施** — 実施計画は [evaluation.md](evaluation.md) セクション3.5 参照
+- [x] **人手評価の実施** → **パイロット完了**（2026-01-08）、詳細は [human_eval_results.md](details/human_eval_results.md)
   - [x] Step 1: 評価サンプル抽出（scripts/prepare_human_eval.py作成済み、20件生成）
   - [x] Step 1.5: モデル推論機能追加（任意テキストから予測生成、50件への拡張）
     - `src/models/t5_trainer.py` に `load_model_from_hub()` 追加
     - `scripts/generate_predictions.py` 新規作成（CLI推論）
     - `scripts/prepare_human_eval.py` 拡張（Hub連携機能）
     - `notebooks/inference.py` 新規作成（Colab用）
-  - [ ] Step 2: Googleフォーム作成
-  - [ ] Step 3: 評価実施（1〜3名）
-  - [ ] Step 4: 結果集計・分析
+  - [x] Step 2: 評価アプリ作成（Gradio + HuggingFace Spaces）
+    - `/home/keigo/jmoji-human-eval/` に評価アプリを作成
+    - `scripts/analyze_human_eval.py` 新規作成（結果集計）
+  - [x] Step 3: パイロット評価実施（20件×1名）
+    - 結果: Gold 2.30/4.0、モデルA 1.00/4.0、モデルB 0.90/4.0（意味的一致度）
+    - 選好: focal_top50 6票、top50 3票、同等 11票
+  - [ ] Step 4: 追加評価者による評価（オプション）
+  - [ ] Step 5: HuggingFace Spacesデプロイ（オプション）
 - [x] **モデル改善**: repetition penalty導入（過剰生成対策） → **完了**（2026-01-03）
   - `generate_emoji`関数に`repetition_penalty`パラメータ追加（デフォルト: 1.2）
   - 過剰生成が60%→96%改善、gold絵文字（🏛️🔥🤔）の出現率向上
