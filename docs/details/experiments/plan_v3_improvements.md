@@ -139,7 +139,7 @@ samples = filtered_samples
 
 **Focal Lossの式**:
 
-```
+```text
 FL(p_t) = -α_t * (1 - p_t)^γ * log(p_t)
 ```
 
@@ -209,7 +209,7 @@ def diversity_ratio(predictions, top_n_emojis):
 
 ## 実施順序
 
-```
+```text
 Exp1 (lr1e-4)
     │
     ├─ 改善あり → Exp3 (lr1e-4 + top100)

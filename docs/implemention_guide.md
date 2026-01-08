@@ -191,6 +191,7 @@ data:
 ## 3. 教師LLM呼び出し
 
 > **教師モデルの履歴**
+>
 > - **v1〜v3**: Claude Haiku 4.5（OpenRouter経由）
 > - **v4以降**: Qwen3-235B-A22B（OpenRouter経由）
 >

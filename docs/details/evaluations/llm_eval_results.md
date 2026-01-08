@@ -170,13 +170,13 @@
 
 ### 使用ツール
 
-```
+```text
 Task tool + general-purpose subagent + model: opus
 ```
 
 ### 評価フロー
 
-```
+```text
 1. predictions_sample.jsonl から20件を取得
 2. 2バッチ（各10件）に分割
 3. 並列でsubagent評価を実行
@@ -205,7 +205,7 @@ Task tool + general-purpose subagent + model: opus
 
 ## Repetition Penalty 導入結果（2026-01-03追記）
 
-### 概要
+### 導入概要
 
 LLM評価で発見された過剰生成問題に対し、`repetition_penalty`パラメータを導入してテストを実施。
 
