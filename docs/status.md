@@ -168,6 +168,13 @@
     - 選好: focal_top50 6票、top50 3票、同等 11票
   - [ ] Step 4: 追加評価者による評価（オプション）
   - [ ] Step 5: HuggingFace Spacesデプロイ（オプション）
+- [x] **LLM-as-a-Judge評価（マルチペルソナ）** → **完了**（2026-01-23）、詳細は [LLM多人数評価結果](details/evaluations/llm_multi_eval_results.md)
+  - Claude Opus 4.5 subagents × 5（異なるペルソナ）による自動評価
+  - スモークテスト: 5サンプル×5ペルソナ（25評価）
+  - 本番実行: 50サンプル×5ペルソナ（250評価）
+  - 評価者間一致度: Cohen's kappa 0.51-0.76（適度なばらつきあり）
+  - モデル選好: B優位（48票 vs A 41票）、同等が最多（161票、64.4%）
+  - 主要な発見: 両モデルともGoldの35-38%程度の品質、Mode Collapseと文脈無視が課題
 - [x] **モデル改善**: repetition penalty導入（過剰生成対策） → **完了**（2026-01-03）
   - `generate_emoji`関数に`repetition_penalty`パラメータ追加（デフォルト: 1.2）
   - 過剰生成が60%→96%改善、gold絵文字（🏛️🔥🤔）の出現率向上
