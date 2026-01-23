@@ -47,7 +47,8 @@ Jmoji/
 │   ├── generate_predictions_with_penalty.py  # Repetition penalty適用版
 │   ├── test_repetition_penalty.py       # Penalty効果テスト
 │   ├── prepare_human_eval.py            # 人手評価サンプル準備
-│   └── analyze_human_eval.py            # 人手評価結果分析
+│   ├── analyze_human_eval.py            # 人手評価結果分析
+│   └── extract_top_gold_samples.py      # Goldスコア上位サンプル抽出
 ├── src/              # ソースコード
 │   ├── config.py              # 設定ロード
 │   ├── data/                  # データ処理
@@ -114,6 +115,12 @@ uv run scripts/test_repetition_penalty.py \
 uv run scripts/analyze_human_eval.py \
     --space-id AtefAndrus/jmoji-human-eval \
     --output outputs/human_eval/results.json
+
+# Goldスコア上位サンプルを抽出
+uv run scripts/extract_top_gold_samples.py \
+    --input-dir outputs/llm_multi_eval \
+    --top-n 5 \
+    --format json,markdown
 ```
 
 ### テスト・リント
